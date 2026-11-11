@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Confirm Booking{% endblock %}
+{% block content %}
+<div class="page-wrapper" style="max-width:520px">
+  <div class="page-header">
+    <h1>Confirm Your Booking</h1>
+    <p class="text-muted">Review the details before confirming</p>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; flex-direction:column; gap:0.75rem; font-size:0.95rem">
+      <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.6rem">
+        <span class="text-muted">Business</span>
+        <span style="font-weight:600">{{ business.name }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.6rem">
+        <span class="text-muted">Service</span>
+        <span style="font-weight:600">{{ service.name }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.6rem">
+        <span class="text-muted">Date</span>
+        <span style="font-weight:600">{{ booking_date|date:"l, d M Y" }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.6rem">
+        <span class="text-muted">Time</span>
+        <span style="font-weight:600">{{ start_time }} – {{ end_time }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.6rem">
+        <span class="text-muted">Duration</span>
+        <span style="font-weight:600">{{ service.duration_minutes }} minutes</span>
+      </div>
+      <div style="display:flex; justify-content:space-between">
+        <span class="text-muted">Price</span>
+        <span style="font-weight:800; font-size:1.15rem; color:var(--color-green)">KES {{ service.price }}</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-lg w-full" style="justify-content:center">
+        <i class="fas fa-calendar-check"></i> Confirm Booking &amp; Pay
+      </button>
+    </form>
+    <a href="{% url 'core:booking_form' service.id %}?date={{ booking_date|date:'Y-m-d' }}"
+       class="btn btn-secondary w-full mt-1" style="justify-content:center">
+      <i class="fas fa-arrow-left"></i> Choose Different Time
+    </a>
+  </div>
+</div>
+{% endblock %}

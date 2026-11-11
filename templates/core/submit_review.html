@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Leave a Review{% endblock %}
+{% block content %}
+<div class="page-wrapper" style="max-width:520px">
+  <div class="page-header">
+    <h1>Leave a Review</h1>
+    <p class="text-muted">{{ booking.service.business.name }} &bull; {{ booking.service.name }}</p>
+  </div>
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Rating <span style="color:var(--color-error)">*</span></label>
+        <div class="star-rating">
+          {% for i in "54321" %}
+          <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" {% if form.rating.value == i %}checked{% endif %}>
+          <label for="star{{ i }}" aria-label="{{ i }} star{% if i != '1' %}s{% endif %}">
+            <i class="fas fa-star"></i>
+          </label>
+          {% endfor %}
+        </div>
+        {% if form.rating.errors %}<span class="form-error">{{ form.rating.errors.0 }}</span>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.comment.id_for_label }}">Comment (optional)</label>
+        {{ form.comment }}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg w-full" style="justify-content:center">
+        <i class="fas fa-paper-plane"></i> Submit Review
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

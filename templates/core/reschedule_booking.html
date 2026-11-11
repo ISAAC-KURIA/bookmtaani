@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Reschedule Booking{% endblock %}
+{% block content %}
+<div class="page-wrapper" style="max-width:600px">
+  <div class="page-header">
+    <a href="{% url 'core:my_bookings' %}" class="text-muted" style="font-size:0.9rem; text-decoration:none">
+      <i class="fas fa-arrow-left"></i> My Bookings
+    </a>
+    <h1 style="margin-top:0.5rem">Reschedule: {{ service.name }}</h1>
+    <p class="text-muted">{{ service.business.name }} &bull; {{ service.duration_minutes }} min</p>
+  </div>
+
+  <div class="card mb-2" style="border-color:var(--color-warning)">
+    <p style="font-size:0.9rem; color:var(--color-secondary)">
+      Current: <strong>{{ booking.date|date:"d M Y" }}</strong> at <strong>{{ booking.start_time|time:"H:i" }}</strong>
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Select New Date</div>
+    <form method="get" id="date-form">
+      <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap">
+        <div class="form-group" style="flex:1; margin-bottom:0">
+          <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+          {{ form.date }}
+        </div>
+        <button type="submit" class="btn btn-brand">
+          <i class="fas fa-search"></i> Find Slots
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if selected_date %}
+    <div class="card mt-2">
+      <div class="card-title">
+        Available Slots for {{ selected_date|date:"l, d M Y" }}
+      </div>
+      {% if slots %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+          <input type="hidden" name="time" id="selected-time" value="">
+          <div class="slots-grid">
+            {% for slot in slots %}
+              <button type="button" class="slot-btn" onclick="selectSlot(this, '{{ slot }}')">
+                {{ slot }}
+              </button>
+            {% endfor %}
+          </div>
+          <div id="confirm-btn" class="hidden mt-2">
+            <button type="submit" class="btn btn-primary btn-lg w-full" style="justify-content:center">
+              <i class="fas fa-calendar-check"></i> Reschedule to Selected Slot
+            </button>
+          </div>
+        </form>
+      {% else %}
+        <div class="empty-state" style="padding:1.5rem">
+          <i class="fas fa-calendar-times"></i>
+          <p>No available slots on this date.</p>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function selectSlot(btn, time) {
+  document.querySelectorAll('.slot-btn').forEach(b => { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  document.getElementById('selected-time').value = time;
+  document.getElementById('confirm-btn').classList.remove('hidden');
+}
+</script>
+{% endblock %}

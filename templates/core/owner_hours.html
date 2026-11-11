@@ -1,0 +1,60 @@
+{% extends "core/owner_base.html" %}
+{% block title %}Business Hours{% endblock %}
+{% block owner_content %}
+<div class="page-header">
+  <h1>Business Hours</h1>
+  <p class="text-muted">Set your opening and closing times for each day.</p>
+</div>
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div style="overflow-x:auto">
+      <table class="table" style="min-width:400px">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Closed?</th>
+            <th>Open</th>
+            <th>Close</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day_idx, day_name in days %}
+            <tr>
+              <td style="font-weight:600">{{ day_name }}</td>
+              <td>
+                {% with field_name="day_"|add:day_idx|stringformat:"d"|add:"_is_closed" %}
+                  {% for field in form %}
+                    {% if field.name == field_name %}
+                      <input type="checkbox" id="{{ field.id_for_label }}" name="{{ field.html_name }}"
+                             {% if field.value %}checked{% endif %} style="width:auto">
+                    {% endif %}
+                  {% endfor %}
+                {% endwith %}
+              </td>
+              <td>
+                {% with field_name="day_"|add:day_idx|stringformat:"d"|add:"_open" %}
+                  {% for field in form %}
+                    {% if field.name == field_name %}{{ field }}{% endif %}
+                  {% endfor %}
+                {% endwith %}
+              </td>
+              <td>
+                {% with field_name="day_"|add:day_idx|stringformat:"d"|add:"_close" %}
+                  {% for field in form %}
+                    {% if field.name == field_name %}{{ field }}{% endif %}
+                  {% endfor %}
+                {% endwith %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:1.25rem; display:flex; gap:0.75rem">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Hours</button>
+      <a href="{% url 'core:owner_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

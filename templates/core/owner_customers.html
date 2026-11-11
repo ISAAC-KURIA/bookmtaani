@@ -1,0 +1,46 @@
+{% extends "core/owner_base.html" %}
+{% block title %}Customers{% endblock %}
+{% block owner_content %}
+<div class="page-header">
+  <h1>Customer Records</h1>
+  <p class="text-muted">{{ business.name }}</p>
+</div>
+
+{% if customer_data %}
+  <div style="overflow-x:auto">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Visits</th>
+          <th>Total Spend</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in customer_data %}
+          <tr>
+            <td style="font-weight:600">{{ entry.customer.get_full_name|default:entry.customer.username }}</td>
+            <td>{{ entry.visit_count }}</td>
+            <td style="color:var(--color-green); font-weight:600">KES {{ entry.total_spend }}</td>
+            <td style="max-width:200px; font-size:0.88rem; color:var(--color-secondary)">
+              {% if entry.note %}{{ entry.note.note|truncatechars:60 }}{% else %}<em>No note</em>{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'core:owner_customer_note' entry.customer.id %}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-sticky-note"></i> Note
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty-state">
+    <i class="fas fa-users"></i>
+    <p>No customers yet.</p>
+  </div>
+{% endif %}
+{% endblock %}

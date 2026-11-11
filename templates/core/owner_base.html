@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-wrapper">
+  <div class="owner-layout">
+    <!-- Sidebar -->
+    <aside class="owner-sidebar">
+      <nav aria-label="Owner navigation">
+        <a href="{% url 'core:owner_dashboard' %}" class="{% if request.resolver_match.url_name == 'owner_dashboard' %}active{% endif %}">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a href="{% url 'core:owner_bookings' %}" class="{% if 'owner_booking' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fas fa-calendar-alt"></i> Bookings
+        </a>
+        <a href="{% url 'core:owner_services' %}" class="{% if 'owner_service' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fas fa-list-ul"></i> Services
+        </a>
+        <a href="{% url 'core:owner_schedule' %}" class="{% if 'owner_schedule' in request.resolver_match.url_name or 'owner_block' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fas fa-calendar-week"></i> Schedule
+        </a>
+        <a href="{% url 'core:owner_hours' %}" class="{% if request.resolver_match.url_name == 'owner_hours' %}active{% endif %}">
+          <i class="fas fa-clock"></i> Hours
+        </a>
+        <a href="{% url 'core:owner_customers' %}" class="{% if 'owner_customer' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fas fa-users"></i> Customers
+        </a>
+        <a href="{% url 'core:owner_analytics' %}" class="{% if request.resolver_match.url_name == 'owner_analytics' %}active{% endif %}">
+          <i class="fas fa-chart-bar"></i> Analytics
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <div>
+      {% block owner_content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

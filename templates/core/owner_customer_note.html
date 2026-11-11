@@ -1,0 +1,23 @@
+{% extends "core/owner_base.html" %}
+{% block title %}Customer Note{% endblock %}
+{% block owner_content %}
+<div class="page-header">
+  <a href="{% url 'core:owner_customers' %}" class="text-muted" style="font-size:0.9rem; text-decoration:none">
+    <i class="fas fa-arrow-left"></i> Customers
+  </a>
+  <h1 style="margin-top:0.5rem">Note for {{ customer.get_full_name|default:customer.username }}</h1>
+</div>
+<div class="card" style="max-width:500px">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label" for="{{ form.note.id_for_label }}">Note</label>
+      {{ form.note }}
+    </div>
+    <div style="display:flex; gap:0.75rem; margin-top:1rem">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Note</button>
+      <a href="{% url 'core:owner_customers' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

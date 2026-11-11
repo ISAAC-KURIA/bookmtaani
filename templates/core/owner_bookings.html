@@ -1,0 +1,78 @@
+{% extends "core/owner_base.html" %}
+{% block title %}Manage Bookings{% endblock %}
+{% block owner_content %}
+<div class="page-header">
+  <h1>Manage Bookings</h1>
+</div>
+
+<!-- Filter bar -->
+<div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem">
+  <a href="{% url 'core:owner_bookings' %}" class="btn btn-sm {% if not status_filter %}btn-brand{% else %}btn-secondary{% endif %}">All</a>
+  {% for val, label in status_choices %}
+    <a href="{% url 'core:owner_bookings' %}?status={{ val }}"
+       class="btn btn-sm {% if status_filter == val %}btn-brand{% else %}btn-secondary{% endif %}">
+      {{ label }}
+    </a>
+  {% endfor %}
+</div>
+
+{% if bookings %}
+  <div style="overflow-x:auto">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Service</th>
+          <th>Date &amp; Time</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bookings %}
+          <tr>
+            <td style="font-weight:600">{{ b.customer.get_full_name|default:b.customer.username }}</td>
+            <td>{{ b.service.name }}</td>
+            <td>{{ b.date|date:"d M Y" }}<br><span class="text-muted" style="font-size:0.82rem">{{ b.start_time|time:"H:i" }}–{{ b.end_time|time:"H:i" }}</span></td>
+            <td style="color:var(--color-green); font-weight:600">KES {{ b.service.price }}</td>
+            <td><span class="badge badge-status-{{ b.status }}">{{ b.get_status_display }}</span></td>
+            <td>
+              <div style="display:flex; gap:0.3rem; flex-wrap:wrap">
+                {% if b.status == 'pending' %}
+                  <form method="post" action="{% url 'core:owner_booking_action' b.id %}">
+                    {% csrf_token %}<input type="hidden" name="action" value="confirm">
+                    <button class="btn btn-primary btn-sm"><i class="fas fa-check"></i> Confirm</button>
+                  </form>
+                  <form method="post" action="{% url 'core:owner_booking_action' b.id %}">
+                    {% csrf_token %}<input type="hidden" name="action" value="cancel">
+                    <button class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Decline</button>
+                  </form>
+                {% elif b.status == 'confirmed' %}
+                  <form method="post" action="{% url 'core:owner_booking_action' b.id %}">
+                    {% csrf_token %}<input type="hidden" name="action" value="complete">
+                    <button class="btn btn-primary btn-sm"><i class="fas fa-check-double"></i> Complete</button>
+                  </form>
+                  <form method="post" action="{% url 'core:owner_booking_action' b.id %}">
+                    {% csrf_token %}<input type="hidden" name="action" value="no_show">
+                    <button class="btn btn-secondary btn-sm"><i class="fas fa-user-slash"></i> No Show</button>
+                  </form>
+                  <form method="post" action="{% url 'core:owner_booking_action' b.id %}">
+                    {% csrf_token %}<input type="hidden" name="action" value="cancel">
+                    <button class="btn btn-danger btn-sm"><i class="fas fa-ban"></i> Cancel</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty-state">
+    <i class="fas fa-calendar-alt"></i>
+    <p>No bookings found{% if status_filter %} with status "{{ status_filter }}"{% endif %}.</p>
+  </div>
+{% endif %}
+{% endblock %}

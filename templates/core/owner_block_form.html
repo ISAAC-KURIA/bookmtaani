@@ -1,0 +1,27 @@
+{% extends "core/owner_base.html" %}
+{% block title %}Add Time Block{% endblock %}
+{% block owner_content %}
+<div class="page-header">
+  <a href="{% url 'core:owner_schedule' %}" class="text-muted" style="font-size:0.9rem; text-decoration:none">
+    <i class="fas fa-arrow-left"></i> Schedule
+  </a>
+  <h1 style="margin-top:0.5rem">Add Time Block</h1>
+  <p class="text-muted">Block off time for lunch, closure, or other reasons.</p>
+</div>
+<div class="card" style="max-width:500px">
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<span class="form-error">{{ field.errors.0 }}</span>{% endif %}
+      </div>
+    {% endfor %}
+    <div style="display:flex; gap:0.75rem; margin-top:1rem">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Block</button>
+      <a href="{% url 'core:owner_schedule' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

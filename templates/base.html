@@ -1,0 +1,78 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BookMtaani{% endblock %} — BookMtaani</title>
+  <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Demo banner -->
+  <div class="demo-banner" role="banner">
+    <i class="fas fa-flask"></i>
+    Demo mode: simulated data &nbsp;|&nbsp; M-Pesa, SMS and AI insights are SIMULATED &nbsp;|&nbsp; For local demo only
+  </div>
+
+  <!-- Navigation -->
+  <nav class="navbar" aria-label="Main navigation">
+    <div class="navbar-inner">
+      <a href="{% url 'core:home' %}" class="navbar-brand">
+        <i class="fas fa-calendar-check"></i> BookMtaani
+      </a>
+      <button class="navbar-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.navbar-nav').classList.toggle('open')">
+        <i class="fas fa-bars"></i>
+      </button>
+      <ul class="navbar-nav" id="main-nav">
+        <li><a href="{% url 'core:home' %}"><i class="fas fa-search"></i> Find Services</a></li>
+        {% if user.is_authenticated %}
+          {% if user.profile.is_owner %}
+            <li><a href="{% url 'core:owner_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="{% url 'core:owner_bookings' %}"><i class="fas fa-calendar-alt"></i> Bookings</a></li>
+            <li><a href="{% url 'core:owner_analytics' %}"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+          {% else %}
+            <li><a href="{% url 'core:my_bookings' %}"><i class="fas fa-calendar-alt"></i> My Bookings</a></li>
+            <li><a href="{% url 'core:notifications' %}"><i class="fas fa-bell"></i> Notifications</a></li>
+          {% endif %}
+          {% if user.is_staff %}
+            <li><a href="{% url 'core:platform_totals' %}"><i class="fas fa-chart-pie"></i> Platform</a></li>
+            <li><a href="{% url 'admin:index' %}" target="_blank"><i class="fas fa-cog"></i> Admin</a></li>
+          {% endif %}
+          <li><a href="{% url 'core:logout' %}"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
+        {% else %}
+          <li><a href="{% url 'core:login' %}"><i class="fas fa-sign-in-alt"></i> Sign In</a></li>
+          <li><a href="{% url 'core:register' %}"><i class="fas fa-user-plus"></i> Register</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Messages -->
+  {% if messages %}
+    <div class="messages-container" role="alert" aria-live="polite">
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
+          <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Page content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>BookMtaani &mdash; Digital booking for small businesses in Kenya &nbsp;&bull;&nbsp;
+    AI Hackathon, Kisii National Polytechnic, Nov 2026 &nbsp;&bull;&nbsp;
+    <strong>DEMO ONLY &mdash; not for public deployment</strong></p>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Book {{ service.name }}{% endblock %}
+{% block content %}
+<div class="page-wrapper" style="max-width:600px">
+  <div class="page-header">
+    <a href="{% url 'core:business_detail' service.business.slug %}" class="text-muted" style="font-size:0.9rem; text-decoration:none">
+      <i class="fas fa-arrow-left"></i> Back to {{ service.business.name }}
+    </a>
+    <h1 style="margin-top:0.5rem">Book {{ service.name }}</h1>
+    <p class="text-muted">{{ service.business.name }} &bull; {{ service.duration_minutes }} min &bull;
+      <strong class="text-green">KES {{ service.price }}</strong></p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Select a Date</div>
+    <form method="get" id="date-form">
+      <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap">
+        <div class="form-group" style="flex:1; margin-bottom:0">
+          <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+          {{ form.date }}
+          {% if form.date.errors %}<span class="form-error">{{ form.date.errors.0 }}</span>{% endif %}
+        </div>
+        <button type="submit" class="btn btn-brand">
+          <i class="fas fa-search"></i> Find Slots
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if selected_date %}
+    <div class="card mt-2" id="slots-section">
+      <div class="card-title">
+        <i class="fas fa-clock text-brand"></i>
+        Available Slots for {{ selected_date|date:"l, d M Y" }}
+      </div>
+
+      {% if slots %}
+        <form method="post" action="{% url 'core:booking_confirm' service.id selected_date|date:'Y-m-d' '__SLOT__' %}">
+          {% csrf_token %}
+          <input type="hidden" name="time" id="selected-time" value="">
+          <div class="slots-grid" role="group" aria-label="Available time slots">
+            {% for slot in slots %}
+              <button type="button" class="slot-btn" data-time="{{ slot }}"
+                      onclick="selectSlot(this, '{{ slot }}')" aria-pressed="false">
+                {{ slot }}
+              </button>
+            {% endfor %}
+          </div>
+          <div id="confirm-btn-wrapper" class="hidden mt-2">
+            <a href="#" id="confirm-link" class="btn btn-primary btn-lg w-full" style="justify-content:center">
+              <i class="fas fa-calendar-check"></i> Confirm Slot
+            </a>
+          </div>
+        </form>
+      {% else %}
+        <div class="empty-state" style="padding:1.5rem">
+          <i class="fas fa-calendar-times"></i>
+          <p>No available slots on {{ selected_date|date:"l, d M Y" }}.</p>
+          <p style="font-size:0.85rem; margin-top:0.4rem">The business may be closed or fully booked.</p>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function selectSlot(btn, time) {
+  document.querySelectorAll('.slot-btn').forEach(function(b) {
+    b.classList.remove('selected');
+    b.setAttribute('aria-pressed', 'false');
+  });
+  btn.classList.add('selected');
+  btn.setAttribute('aria-pressed', 'true');
+  document.getElementById('selected-time').value = time;
+  var date = "{{ selected_date|date:'Y-m-d' }}";
+  var link = document.getElementById('confirm-link');
+  link.href = "/book/{{ service.id }}/confirm/" + date + "/" + time + "/";
+  document.getElementById('confirm-btn-wrapper').classList.remove('hidden');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Find Services{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+  <div class="page-header">
+    <h1>Find Services Near You</h1>
+    <p>Book appointments at kinyozis, salons, spas, and more across Kenya</p>
+  </div>
+
+  <!-- Search bar -->
+  <div class="search-bar">
+    <form method="get" action="{% url 'core:home' %}">
+      <div class="form-group">
+        <label class="form-label" for="search">Search</label>
+        <input id="search" type="text" name="search" class="form-input" placeholder="Search business name..." value="{{ search_query }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="category">Category</label>
+        <select id="category" name="category" class="form-input">
+          <option value="">All Categories</option>
+          {% for val, label in categories %}
+            <option value="{{ val }}" {% if val == selected_category %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="town">Town</label>
+        <select id="town" name="town" class="form-input">
+          <option value="">All Towns</option>
+          {% for t in towns %}
+            <option value="{{ t }}" {% if t == selected_town %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-brand">
+        <i class="fas fa-search"></i> Search
+      </button>
+      {% if selected_category or selected_town or search_query %}
+        <a href="{% url 'core:home' %}" class="btn btn-secondary">
+          <i class="fas fa-times"></i> Clear
+        </a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Results -->
+  {% if businesses %}
+    <p class="text-muted mb-1">{{ businesses|length }} business{{ businesses|length|pluralize }} found</p>
+    <div class="business-grid">
+      {% for b in businesses %}
+        {% with avg=b.average_rating count=b.review_count %}
+        <a href="{% url 'core:business_detail' b.slug %}" class="business-card">
+          <div class="business-card-header">
+            <div class="business-icon">
+              <i class="fas {{ b.get_category_icon }}"></i>
+            </div>
+            <div>
+              <div class="business-name">{{ b.name }}</div>
+              <div class="business-meta">
+                <i class="fas fa-map-marker-alt"></i> {{ b.town }}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.25rem">
+            <span class="badge badge-category">{{ b.get_category_display }}</span>
+            {% if b.is_verified %}
+              <span class="badge badge-verified"><i class="fas fa-check-circle"></i> Verified</span>
+            {% endif %}
+          </div>
+          {% if b.description %}
+            <p style="font-size:0.85rem; color:var(--color-secondary); margin-top:0.25rem">{{ b.description|truncatechars:80 }}</p>
+          {% endif %}
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem; font-size:0.85rem">
+            {% if avg %}
+              <span class="stars">
+                {% for i in "12345" %}
+                  <i class="fa{% if forloop.counter <= avg|floatformat:"0" %} fa-star{% else %} fa-star{% endif %}"
+                     style="{% if forloop.counter > avg %}opacity:0.3{% endif %}"></i>
+                {% endfor %}
+              </span>
+              <span class="rating-avg">{{ avg }}</span>
+              <span class="text-muted">({{ count }})</span>
+            {% else %}
+              <span class="text-muted"><i class="fas fa-star" style="opacity:0.3"></i> No reviews yet</span>
+            {% endif %}
+            <span style="margin-left:auto; font-size:0.8rem; color:var(--color-brand)">
+              {{ b.services.count }} service{{ b.services.count|pluralize }}
+            </span>
+          </div>
+        </a>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="fas fa-store-slash"></i>
+      <p>No businesses found matching your search.</p>
+      {% if selected_category or selected_town or search_query %}
+        <a href="{% url 'core:home' %}" class="btn btn-secondary mt-2">Clear filters</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

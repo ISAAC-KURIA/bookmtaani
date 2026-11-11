@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ business.name }}{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+  <!-- Header -->
+  <div style="display:flex; align-items:flex-start; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap">
+    <div class="business-icon" style="width:3.5rem;height:3.5rem;font-size:1.4rem">
+      <i class="fas {{ business.get_category_icon }}"></i>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap">
+        <h1 style="font-size:1.6rem; font-weight:800">{{ business.name }}</h1>
+        {% if business.is_verified %}
+          <span class="badge badge-verified" style="font-size:0.85rem">
+            <i class="fas fa-check-circle"></i> Verified
+          </span>
+        {% endif %}
+      </div>
+      <p class="text-muted" style="margin-top:0.2rem">
+        <i class="fas fa-map-marker-alt"></i> {{ business.town }} &bull;
+        <span class="badge badge-category" style="vertical-align:middle">{{ business.get_category_display }}</span>
+      </p>
+      {% if avg_rating %}
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem">
+          <span class="stars">
+            {% for i in "12345" %}
+              <i class="fas fa-star" style="{% if forloop.counter > avg_rating %}opacity:0.3{% endif %}"></i>
+            {% endfor %}
+          </span>
+          <span class="rating-avg">{{ avg_rating }}</span>
+          <span class="text-muted">({{ review_count }} review{{ review_count|pluralize }})</span>
+        </div>
+      {% endif %}
+      {% if business.phone %}
+        <p style="margin-top:0.4rem; font-size:0.9rem; color:var(--color-secondary)">
+          <i class="fas fa-phone"></i> {{ business.phone }}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if business.description %}
+    <p style="margin-bottom:1.5rem; color:var(--color-secondary)">{{ business.description }}</p>
+  {% endif %}
+
+  <div style="display:grid; grid-template-columns:1fr 300px; gap:1.5rem; align-items:start">
+    <div>
+      <!-- Services -->
+      <div class="card mb-2">
+        <div class="card-title"><i class="fas fa-list-ul text-brand"></i> Services</div>
+        {% for service in services %}
+          <div style="display:flex; align-items:flex-start; gap:1rem; padding:0.75rem 0; border-bottom:1px solid var(--color-border)">
+            <div style="flex:1">
+              <div style="font-weight:600">{{ service.name }}</div>
+              {% if service.description %}<div style="font-size:0.85rem; color:var(--color-secondary)">{{ service.description }}</div>{% endif %}
+              <div style="font-size:0.85rem; color:var(--color-secondary); margin-top:0.2rem">
+                <i class="fas fa-clock"></i> {{ service.duration_minutes }} min
+              </div>
+            </div>
+            <div style="text-align:right; min-width:100px">
+              <div style="font-weight:800; font-size:1.1rem; color:var(--color-green)">KES {{ service.price }}</div>
+              {% if user.is_authenticated %}
+                <a href="{% url 'core:booking_form' service.id %}" class="btn btn-primary btn-sm mt-1">
+                  Book
+                </a>
+              {% else %}
+                <a href="{% url 'core:login' %}?next={{ request.path }}" class="btn btn-secondary btn-sm mt-1">
+                  Sign in to book
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted">No services listed yet.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Reviews -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-star text-brand"></i> Reviews</div>
+        {% for review in reviews %}
+          <div style="padding:0.75rem 0; border-bottom:1px solid var(--color-border)">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem">
+              <span class="stars" style="font-size:0.85rem">
+                {% for i in "12345" %}
+                  <i class="fas fa-star" style="{% if forloop.counter > review.rating %}opacity:0.3{% endif %}"></i>
+                {% endfor %}
+              </span>
+              <span style="font-weight:600; font-size:0.9rem">{{ review.booking.customer.get_full_name|default:review.booking.customer.username }}</span>
+              <span class="text-muted" style="font-size:0.8rem">{{ review.created_at|date:"d M Y" }}</span>
+            </div>
+            {% if review.comment %}
+              <p style="font-size:0.9rem; color:var(--color-secondary)">{{ review.comment }}</p>
+            {% endif %}
+            <p style="font-size:0.8rem; color:var(--color-secondary)">
+              <i class="fas fa-scissors"></i> {{ review.booking.service.name }}
+            </p>
+          </div>
+        {% empty %}
+          <p class="text-muted">No reviews yet. Be the first!</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Sidebar: opening hours -->
+    <div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-clock text-brand"></i> Opening Hours</div>
+        {% for h in hours %}
+          <div style="display:flex; justify-content:space-between; padding:0.3rem 0; font-size:0.9rem; border-bottom:1px solid var(--color-border)">
+            <span style="font-weight:600">{{ h.get_day_of_week_display }}</span>
+            <span class="text-muted">
+              {% if h.is_closed %}
+                <span style="color:var(--color-error)">Closed</span>
+              {% elif h.open_time and h.close_time %}
+                {{ h.open_time|time:"H:i" }} – {{ h.close_time|time:"H:i" }}
+              {% else %}
+                Closed
+              {% endif %}
+            </span>
+          </div>
+        {% empty %}
+          <p class="text-muted">Hours not set.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

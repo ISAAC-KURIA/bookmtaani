@@ -1,0 +1,150 @@
+{% extends "core/owner_base.html" %}
+{% load static %}
+{% block title %}Analytics{% endblock %}
+{% block extra_head %}
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+{% endblock %}
+{% block owner_content %}
+<div class="page-header">
+  <h1><i class="fas fa-chart-bar text-brand"></i> Analytics</h1>
+  <p class="text-muted">{{ business.name }}</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ total_bookings }}</div>
+    <div class="stat-label">Total Bookings</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ completed_bookings }}</div>
+    <div class="stat-label">Completed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ no_show_rate }}%</div>
+    <div class="stat-label">No-Show Rate</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="font-size:1.3rem">KES {{ total_revenue }}</div>
+    <div class="stat-label">Total Revenue</div>
+  </div>
+</div>
+
+{% if popular_service %}
+  <div class="card mb-2">
+    <div class="card-title">Most Popular Service</div>
+    <p style="font-size:1.05rem; font-weight:600; color:var(--color-green)">
+      <i class="fas fa-trophy"></i> {{ popular_service.name }}
+      <span class="text-muted" style="font-weight:normal; font-size:0.9rem">
+        — {{ popular_service.booking_count }} booking{{ popular_service.booking_count|pluralize }}
+      </span>
+    </p>
+  </div>
+{% endif %}
+
+<!-- Busy-time insight -->
+<div class="insight-box mb-2">
+  <span class="insight-label">
+    <i class="fas fa-lightbulb"></i> Simulated AI Insight (rule-based, no external service)
+  </span>
+  <p>{{ busy_insight }}</p>
+</div>
+
+<!-- Charts -->
+<div class="card mb-2">
+  <div class="card-title">Bookings Per Day (last 30 days)</div>
+  <div class="chart-container">
+    <canvas id="dailyChart"></canvas>
+  </div>
+</div>
+
+<div class="card mb-2">
+  <div class="card-title">Revenue Per Week (last 8 weeks)</div>
+  <div class="chart-container">
+    <canvas id="weekChart"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Busiest Hours</div>
+  <div class="chart-container">
+    <canvas id="hourChart"></canvas>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+var BRAND = '#1D4ED8';
+var GREEN = '#15803D';
+var GRAY = '#E5E7EB';
+
+var dailyCtx = document.getElementById('dailyChart').getContext('2d');
+new Chart(dailyCtx, {
+  type: 'bar',
+  data: {
+    labels: {{ daily_labels|safe }},
+    datasets: [{
+      label: 'Bookings',
+      data: {{ daily_data|safe }},
+      backgroundColor: BRAND,
+      borderColor: BRAND,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: GRAY } },
+      x: { grid: { display: false }, ticks: { maxRotation: 45 } }
+    }
+  }
+});
+
+var weekCtx = document.getElementById('weekChart').getContext('2d');
+new Chart(weekCtx, {
+  type: 'bar',
+  data: {
+    labels: {{ week_labels|safe }},
+    datasets: [{
+      label: 'Revenue (KES)',
+      data: {{ week_data|safe }},
+      backgroundColor: GREEN,
+      borderColor: GREEN,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: GRAY } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+var hourCtx = document.getElementById('hourChart').getContext('2d');
+new Chart(hourCtx, {
+  type: 'bar',
+  data: {
+    labels: {{ hour_labels|safe }},
+    datasets: [{
+      label: 'Bookings',
+      data: {{ hour_data|safe }},
+      backgroundColor: BRAND,
+      borderColor: BRAND,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: GRAY } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+</script>
+{% endblock %}

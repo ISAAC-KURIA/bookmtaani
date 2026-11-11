@@ -1,0 +1,54 @@
+{% extends "core/owner_base.html" %}
+{% block title %}Owner Dashboard{% endblock %}
+{% block owner_content %}
+<div class="page-header">
+  <h1><i class="fas fa-tachometer-alt text-brand"></i> Dashboard</h1>
+  <p class="text-muted">{{ business.name }} &bull; {{ today|date:"l, d M Y" }}</p>
+</div>
+
+{% if pending_count > 0 %}
+  <div class="alert alert-warning mb-2">
+    <i class="fas fa-exclamation-triangle"></i>
+    You have <strong>{{ pending_count }}</strong> pending booking{{ pending_count|pluralize }} awaiting approval.
+    <a href="{% url 'core:owner_bookings' %}?status=pending" style="color:inherit; font-weight:700; margin-left:0.5rem">Review now</a>
+  </div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title"><i class="fas fa-calendar-day text-brand"></i> Today's Schedule</div>
+  {% if todays_bookings %}
+    {% for b in todays_bookings %}
+      <div class="timeline-item">
+        <div class="timeline-time">{{ b.start_time|time:"H:i" }}</div>
+        <div>
+          <div style="font-weight:600">{{ b.customer.get_full_name|default:b.customer.username }}</div>
+          <div style="font-size:0.88rem; color:var(--color-secondary)">{{ b.service.name }} &bull; {{ b.service.duration_minutes }} min</div>
+          <span class="badge badge-status-{{ b.status }}" style="margin-top:0.3rem">{{ b.get_status_display }}</span>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:1.5rem">
+      <i class="fas fa-calendar-check"></i>
+      <p>No bookings scheduled for today.</p>
+    </div>
+  {% endif %}
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:1rem; margin-top:1.5rem">
+  <a href="{% url 'core:owner_bookings' %}" class="card" style="text-decoration:none; text-align:center; color:var(--color-text)">
+    <div style="font-size:1.6rem; color:var(--color-brand); font-weight:800">{{ pending_count }}</div>
+    <div style="font-size:0.85rem; color:var(--color-secondary)">Pending Bookings</div>
+  </a>
+  <a href="{% url 'core:owner_services' %}" class="card" style="text-decoration:none; text-align:center; color:var(--color-text)">
+    <div style="font-size:1.6rem; color:var(--color-brand); font-weight:800">{{ business.services.count }}</div>
+    <div style="font-size:0.85rem; color:var(--color-secondary)">Active Services</div>
+  </a>
+  <a href="{% url 'core:owner_analytics' %}" class="card" style="text-decoration:none; text-align:center; color:var(--color-text)">
+    <div style="font-size:1.6rem; color:var(--color-brand); font-weight:800">
+      <i class="fas fa-chart-bar"></i>
+    </div>
+    <div style="font-size:0.85rem; color:var(--color-secondary)">View Analytics</div>
+  </a>
+</div>
+{% endblock %}

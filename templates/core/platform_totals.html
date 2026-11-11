@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Platform Totals{% endblock %}
+{% block extra_head %}
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+{% endblock %}
+{% block content %}
+<div class="page-wrapper">
+  <div class="page-header">
+    <h1><i class="fas fa-chart-pie text-brand"></i> Platform Overview</h1>
+    <p class="text-muted">Staff-only platform statistics — simulated data</p>
+  </div>
+
+  <div class="stats-grid mb-3">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_businesses }}</div>
+      <div class="stat-label">Total Businesses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ verified_businesses }}</div>
+      <div class="stat-label">Verified Businesses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_bookings }}</div>
+      <div class="stat-label">Total Bookings</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="font-size:1.3rem">KES {{ total_revenue }}</div>
+      <div class="stat-label">Revenue (Simulated)</div>
+    </div>
+  </div>
+
+  <div class="card mb-2">
+    <div class="card-title">Bookings Per Day (last 30 days)</div>
+    <div class="chart-container">
+      <canvas id="platformDailyChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Quick Links</div>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap">
+      <a href="/django-admin/core/business/?is_verified__exact=0" class="btn btn-brand">
+        <i class="fas fa-check-circle"></i> Verify Businesses
+      </a>
+      <a href="/django-admin/auth/user/" class="btn btn-secondary">
+        <i class="fas fa-users"></i> Manage Users
+      </a>
+      <a href="/django-admin/" class="btn btn-secondary">
+        <i class="fas fa-cog"></i> Django Admin
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+var ctx = document.getElementById('platformDailyChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: {{ daily_labels|safe }},
+    datasets: [{
+      label: 'Bookings',
+      data: {{ daily_data|safe }},
+      backgroundColor: '#1D4ED8',
+      borderColor: '#1D4ED8',
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#E5E7EB' } },
+      x: { grid: { display: false }, ticks: { maxRotation: 45 } }
+    }
+  }
+});
+</script>
+{% endblock %}
