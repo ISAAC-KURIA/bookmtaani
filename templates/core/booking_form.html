@@ -35,14 +35,26 @@
       </div>
 
       {% if slots %}
+        <span class="insight-label">Simulated insight (rule-based, from booking history)</span>
+        <div class="busy-legend" role="list" aria-label="Busy level legend">
+          <span class="legend-quiet" role="listitem"><i class="fas fa-circle-check"></i> Quiet</span>
+          <span class="legend-normal" role="listitem"><i class="fas fa-clock"></i> Normal</span>
+          <span class="legend-busy" role="listitem"><i class="fas fa-triangle-exclamation"></i> Busy</span>
+        </div>
+
         <form method="post" action="{% url 'core:booking_confirm' service.id selected_date|date:'Y-m-d' '__SLOT__' %}">
           {% csrf_token %}
           <input type="hidden" name="time" id="selected-time" value="">
           <div class="slots-grid" role="group" aria-label="Available time slots">
-            {% for slot in slots %}
-              <button type="button" class="slot-btn" data-time="{{ slot }}"
-                      onclick="selectSlot(this, '{{ slot }}')" aria-pressed="false">
-                {{ slot }}
+            {% for info in slot_infos %}
+              <button type="button" class="slot-btn level-{{ info.level }}"
+                      data-time="{{ info.time }}"
+                      data-level="{{ info.level }}"
+                      data-message="{{ info.message }}"
+                      data-suggestions="{{ info.suggestions|join:', ' }}"
+                      onclick="selectSlot(this, '{{ info.time }}')" aria-pressed="false">
+                <span class="slot-time">{{ info.time }}</span>
+                <span class="slot-level-label"><i class="fas {{ info.icon }}"></i> {{ info.level_label }}</span>
               </button>
             {% endfor %}
           </div>
@@ -52,6 +64,8 @@
             </a>
           </div>
         </form>
+
+        <div id="busy-verdict" class="busy-verdict hidden" aria-live="polite" role="status"></div>
       {% else %}
         <div class="empty-state" style="padding:1.5rem">
           <i class="fas fa-calendar-times"></i>
@@ -77,6 +91,64 @@ function selectSlot(btn, time) {
   var link = document.getElementById('confirm-link');
   link.href = "/book/{{ service.id }}/confirm/" + date + "/" + time + "/";
   document.getElementById('confirm-btn-wrapper').classList.remove('hidden');
+  showBusyVerdict(btn);
+}
+
+function busyIconFor(level) {
+  if (level === 'quiet') return 'fa-circle-check';
+  if (level === 'normal') return 'fa-clock';
+  if (level === 'busy') return 'fa-triangle-exclamation';
+  return 'fa-circle-question';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+// Renders the verdict panel from the clicked slot's precomputed data-*
+// attributes. No busy-level math happens in the browser — the server
+// computes everything; this only displays it.
+function showBusyVerdict(btn) {
+  var verdict = document.getElementById('busy-verdict');
+  if (!verdict) return;
+  var level = btn.getAttribute('data-level');
+  var message = btn.getAttribute('data-message') || '';
+  var suggestions = btn.getAttribute('data-suggestions') || '';
+
+  verdict.className = 'busy-verdict v-' + level;
+  var html = '<div class="busy-verdict-main"><i class="fas ' + busyIconFor(level) + '"></i> ' +
+             '<span>' + escapeHtml(message) + '</span></div>';
+
+  if (level === 'busy' && suggestions.trim() !== '') {
+    var parts = suggestions.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+    if (parts.length) {
+      html += '<div class="busy-suggestions"><span>Quieter nearby slots:</span> ';
+      parts.forEach(function(p, idx) {
+        if (idx > 0) html += ' ';
+        html += '<button type="button" class="busy-suggestion-chip" data-time="' + escapeHtml(p) + '">' +
+                '<i class="fas fa-circle-check"></i> ' + escapeHtml(p) + '</button>';
+      });
+      html += '</div>';
+    }
+  }
+
+  verdict.innerHTML = html;
+  verdict.classList.remove('hidden');
+
+  // Clicking a suggested quieter slot selects it, same as clicking the slot.
+  verdict.querySelectorAll('.busy-suggestion-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      var t = chip.getAttribute('data-time');
+      var target = document.querySelector('.slot-btn[data-time="' + t + '"]');
+      if (target) {
+        selectSlot(target, t);
+        target.focus();
+        target.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+      }
+    });
+  });
 }
 </script>
 {% endblock %}

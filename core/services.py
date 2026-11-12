@@ -221,3 +221,179 @@ def create_sms_notifications(booking):
             content=content,
             status='simulated',
         )
+
+
+# ===========================================================================
+# "Best time to book" — busy-level suggestion
+#
+# Labels each available slot Quiet / Normal / Busy (or "Not enough data")
+# from the business's past bookings in the database. This is a transparent
+# rule-based heuristic, NOT a machine-learning model.
+#
+# Which bookings count as historical "real" demand:
+#   Only CONFIRMED and COMPLETED bookings are counted. These are bookings
+#   that actually occupied the slot (honored demand). PENDING may still be
+#   cancelled, CANCELLED freed the slot, and NO_SHOW means the customer never
+#   arrived so the business experienced that slot as quiet — counting any of
+#   those as "busy" would mislead.
+#
+# Not-enough-data threshold:
+#   If the business has fewer than BUSY_MIN_HISTORY (= 5) total real
+#   historical bookings, every slot is labeled "Not enough data" rather than
+#   guessing. A single global threshold keeps the rule simple and testable.
+#
+# Level thresholds (relative to the business's own average):
+#   Group real bookings by (weekday, hour). mean = total real bookings divided
+#   by the number of distinct occupied (weekday, hour) buckets. For a slot,
+#   ratio = count(its weekday, hour) / mean.
+#       ratio >= 1.3 -> Busy
+#       ratio <= 0.7 -> Quiet
+#       otherwise   -> Normal
+#   A slot with no past bookings has count 0 -> ratio 0 -> Quiet, which is
+#   reasonable once the business has enough history overall.
+# ===========================================================================
+
+BUSY_MIN_HISTORY = 5
+BUSY_BUSY_RATIO = 1.3
+BUSY_QUIET_RATIO = 0.7
+
+LEVEL_QUIET = 'quiet'
+LEVEL_NORMAL = 'normal'
+LEVEL_BUSY = 'busy'
+LEVEL_NO_DATA = 'no_data'
+
+# level -> (label, Font Awesome icon class, message shown for a selected slot)
+_LEVEL_META = {
+    LEVEL_QUIET: (
+        'Quiet',
+        'fa-circle-check',
+        'Usually quiet at this time, good choice',
+    ),
+    LEVEL_NORMAL: (
+        'Normal',
+        'fa-clock',
+        'A usual number of bookings at this time',
+    ),
+    LEVEL_BUSY: (
+        'Busy',
+        'fa-triangle-exclamation',
+        'Usually busy at this time, you may wait',
+    ),
+    LEVEL_NO_DATA: (
+        'Not enough data',
+        'fa-circle-question',
+        'Not enough booking history to estimate this slot yet',
+    ),
+}
+
+BUSY_BASIS_LABEL = 'Simulated insight (rule-based, from booking history)'
+
+
+def _booking_counts(business):
+    """
+    Count the business's real historical bookings grouped by (weekday, hour).
+
+    Returns a tuple (counts, total_real, num_buckets) where ``counts`` maps
+    (weekday, hour) -> int, ``total_real`` is the count of CONFIRMED+COMPLETED
+    bookings, and ``num_buckets`` is the number of distinct (weekday, hour)
+    keys with at least one booking.
+    """
+    from .models import Booking
+
+    counts = {}
+    total = 0
+    qs = Booking.objects.filter(
+        service__business=business,
+        status__in=(Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED),
+    ).values_list('date', 'start_time')
+    for booking_date, start_time in qs:
+        key = (booking_date.weekday(), start_time.hour)
+        counts[key] = counts.get(key, 0) + 1
+        total += 1
+    return counts, total, len(counts)
+
+
+def _classify_ratio(ratio):
+    """Map a count/mean ratio to a busy level string."""
+    if ratio >= BUSY_BUSY_RATIO:
+        return LEVEL_BUSY
+    if ratio <= BUSY_QUIET_RATIO:
+        return LEVEL_QUIET
+    return LEVEL_NORMAL
+
+
+def _slot_info(slot, level, suggestions=None):
+    """Build the per-slot info dict the template renders."""
+    label, icon, message = _LEVEL_META[level]
+    return {
+        'time': slot,
+        'level': level,
+        'level_label': label,
+        'icon': icon,
+        'message': message,
+        'suggestions': suggestions or [],
+    }
+
+
+def get_slot_busy_levels(business, selected_date, slots):
+    """
+    Compute a busy level for each available slot for ``selected_date``.
+
+    ``slots`` is a list of 'HH:MM' strings (the output of get_available_slots).
+    ``selected_date`` is the date the customer is booking for; its weekday is
+    used to pick the matching historical counts.
+
+    Returns a dict::
+
+        {
+          'slots': [info, ...],   # one info per slot, same order as `slots`
+          'has_data': bool,       # total real bookings >= BUSY_MIN_HISTORY
+          'basis': str,           # human-facing heuristic label
+        }
+
+    where each ``info`` is the dict produced by ``_slot_info``. The template
+    never computes busy levels itself; it only displays these precomputed
+    values.
+    """
+    counts, total_real, num_buckets = _booking_counts(business)
+
+    # Too little history: don't guess.
+    if total_real < BUSY_MIN_HISTORY:
+        return {
+            'slots': [_slot_info(s, LEVEL_NO_DATA) for s in slots],
+            'has_data': False,
+            'basis': BUSY_BASIS_LABEL,
+        }
+
+    mean = total_real / num_buckets if num_buckets else 0.0
+    target_weekday = selected_date.weekday()
+
+    # First pass: classify each slot's level from its (weekday, hour) history.
+    levels = []
+    for slot in slots:
+        hour = int(slot.split(':')[0])
+        count = counts.get((target_weekday, hour), 0)
+        ratio = count / mean if mean else 0.0
+        levels.append(_classify_ratio(ratio))
+
+    # Second pass: for Busy slots, suggest up to two nearest (by list index)
+    # slots that are Quiet or Normal, so the customer has a calmer alternative.
+    infos = []
+    for i, slot in enumerate(slots):
+        level = levels[i]
+        suggestions = []
+        if level == LEVEL_BUSY:
+            candidates = sorted(
+                ((abs(i - j), j) for j, lvl in enumerate(levels)
+                 if lvl in (LEVEL_QUIET, LEVEL_NORMAL)),
+                key=lambda x: (x[0], x[1]),
+            )
+            for _, j in candidates[:2]:
+                suggestions.append(slots[j])
+        infos.append(_slot_info(slot, level, suggestions))
+
+    return {
+        'slots': infos,
+        'has_data': True,
+        'basis': BUSY_BASIS_LABEL,
+    }

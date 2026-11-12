@@ -152,3 +152,14 @@ This safely deletes and recreates all demo businesses, bookings, and accounts.
 | Why Django? | Rapid prototyping, built-in admin, strong ecosystem. Production would add PostgreSQL, Nginx, and Gunicorn. |
 | Can multiple owners use it? | Yes — each owner sees only their own business and bookings. Owner isolation is tested. |
 | What's the green/sustainability angle? | Paperless records, reduced no-shows save time and fuel, digitisation enables sustainability reporting for micro-businesses. |
+
+---
+
+## Part 5 — "Best time to book" suggestion (~30 seconds)
+
+1. Sign in as a customer and open a service's booking page (`/book/<service_id>/`), then pick a future date and click **Find Slots**.
+2. Each available slot is labeled **Quiet**, **Normal**, or **Busy** with its own Font Awesome icon and text (color is never the only signal). Slots with little history show **Not enough data**.
+3. Point out the **Simulated insight (rule-based, from booking history)** label above the slots — it is a transparent heuristic, not a guarantee.
+4. Click a **Busy** slot: the verdict panel reads "Usually busy at this time, you may wait" and offers one or two quieter nearby slots as clickable chips. Click a **Quiet** slot to see "Usually quiet at this time, good choice".
+
+> **Talk track:** "Each slot's busy level is computed from the business's past confirmed and completed bookings in the database — same weekday and hour versus that business's own average. It's a labeled, rule-based suggestion to help customers avoid the wait, not a black-box prediction."

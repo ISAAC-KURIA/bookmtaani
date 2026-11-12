@@ -1204,3 +1204,146 @@ textarea:focus {
   margin-bottom: 0.2rem;
   font-weight: 600;
 }
+
+/* =====================================================
+   "Best time to book" — busy-level slot labels
+   Flat solid colors only. No gradients. Color is never the
+   only signal: every level also has a Font Awesome icon +
+   text label.
+   ===================================================== */
+
+/* Stack the time above the level label inside each slot button */
+.slot-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 4.5rem;
+  line-height: 1.2;
+}
+
+.slot-btn .slot-time {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.slot-btn .slot-level-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* Level tints (applied when a slot is not selected) */
+.slot-btn.level-quiet {
+  background: #DCFCE7;
+  border-color: #86EFAC;
+  color: var(--color-green);
+}
+.slot-btn.level-normal {
+  background: #FEF3C7;
+  border-color: #FCD34D;
+  color: #B45309;
+}
+.slot-btn.level-busy {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+  color: var(--color-error);
+}
+.slot-btn.level-no_data {
+  background: #F3F4F6;
+  border-color: var(--color-border);
+  color: var(--color-secondary);
+}
+
+/* Hover keeps the level's hue (no flip to brand blue) */
+.slot-btn.level-quiet:hover { background: #BBF7D0; border-color: #4ADE80; color: var(--color-green); }
+.slot-btn.level-normal:hover { background: #FDE68A; border-color: #FBBF24; color: #B45309; }
+.slot-btn.level-busy:hover { background: #FECACA; border-color: #F87171; color: var(--color-error); }
+.slot-btn.level-no_data:hover { background: #E5E7EB; border-color: var(--color-border); color: var(--color-secondary); }
+
+/* Selected overrides the level tint (existing green selected behavior) */
+.slot-btn.selected {
+  background: var(--color-green);
+  border-color: var(--color-green);
+  color: #fff;
+}
+.slot-btn.selected:hover {
+  background: var(--color-green-hover);
+  border-color: var(--color-green-hover);
+  color: #fff;
+}
+.slot-btn.selected .slot-time,
+.slot-btn.selected .slot-level-label {
+  color: #fff;
+}
+
+/* Legend above the slot grid */
+.busy-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+}
+.busy-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.busy-legend .legend-quiet i { color: var(--color-green); }
+.busy-legend .legend-normal i { color: #B45309; }
+.busy-legend .legend-busy i { color: var(--color-error); }
+
+/* Verdict panel for the selected slot */
+.busy-verdict {
+  margin-top: 0.85rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.busy-verdict.hidden { display: none; }
+.busy-verdict > .busy-verdict-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.busy-verdict.v-quiet { background: #DCFCE7; border-color: #86EFAC; color: var(--color-green); }
+.busy-verdict.v-normal { background: #FEF3C7; border-color: #FCD34D; color: #B45309; }
+.busy-verdict.v-busy { background: #FEE2E2; border-color: #FCA5A5; color: var(--color-error); }
+.busy-verdict.v-no_data { background: #F3F4F6; border-color: var(--color-border); color: var(--color-secondary); }
+
+/* Quieter nearby-slot suggestion chips (shown for Busy slots) */
+.busy-suggestions {
+  font-size: 0.85rem;
+  font-weight: 400;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.busy-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #DCFCE7;
+  color: var(--color-green);
+  border: 1px solid #86EFAC;
+  border-radius: 99px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.busy-suggestion-chip:hover {
+  background: #BBF7D0;
+  border-color: #4ADE80;
+}

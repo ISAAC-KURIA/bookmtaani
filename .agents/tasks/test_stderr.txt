@@ -1,0 +1,53 @@
+Creating test database for alias 'default'...
+Destroying test database for alias 'default'...
+Traceback (most recent call last):
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\manage.py", line 22, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\base.py", line 413, in run_from_argv
+    self.execute(*args, **cmd_options)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\base.py", line 459, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\test\runner.py", line 1072, in run_tests
+    self.run_checks(databases)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\test\runner.py", line 994, in run_checks
+    call_command("check", verbosity=self.verbosity, databases=databases)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\__init__.py", line 194, in call_command
+    return command.execute(*args, **defaults)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\base.py", line 459, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\commands\check.py", line 81, in handle
+    self.check(
+    ~~~~~~~~~~^
+        app_configs=app_configs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        databases=options["databases"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\base.py", line 571, in check
+    self.stdout.write(msg)
+    ~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\.venv\Lib\site-packages\django\core\management\base.py", line 181, in write
+    self._out.write(style_func(msg))
+    ^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'write'

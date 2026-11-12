@@ -33,7 +33,7 @@ from .forms import (
     RegisterForm, BookingDateForm, ServiceForm, TimeBlockForm,
     BusinessHoursForm, ReviewForm, CustomerNoteForm, BusinessProfileForm,
 )
-from .services import get_available_slots, create_booking, create_sms_notifications, get_user_role
+from .services import get_available_slots, create_booking, create_sms_notifications, get_user_role, get_slot_busy_levels
 
 logger = logging.getLogger(__name__)
 
@@ -333,12 +333,26 @@ def booking_form(request, service_id):
         selected_date = form.cleaned_data['date']
         slots = get_available_slots(service, selected_date)
 
+    # "Best time to book" busy-level suggestion. All busy-level logic lives in
+    # the service; the template only displays the precomputed results.
+    slot_infos = []
+    busy_basis = ''
+    busy_has_data = False
+    if selected_date:
+        busy = get_slot_busy_levels(service.business, selected_date, slots)
+        slot_infos = busy['slots']
+        busy_basis = busy['basis']
+        busy_has_data = busy['has_data']
+
     context = {
         'service': service,
         'business': service.business,
         'form': form,
         'selected_date': selected_date,
         'slots': slots,
+        'slot_infos': slot_infos,
+        'busy_basis': busy_basis,
+        'busy_has_data': busy_has_data,
     }
     return render(request, 'core/booking_form.html', context)
 

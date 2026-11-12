@@ -1,0 +1,146 @@
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+test_booked_slot_excluded (core.tests.test_booking.AvailableSlotsTest.test_booked_slot_excluded)
+A slot with an existing booking is excluded. ... ok
+test_no_hours_returns_empty (core.tests.test_booking.AvailableSlotsTest.test_no_hours_returns_empty)
+If no business hours set, return empty. ... ok
+test_no_slots_on_closed_day (core.tests.test_booking.AvailableSlotsTest.test_no_slots_on_closed_day)
+Closed days return empty list. ... ok
+test_slots_returned_for_open_day (core.tests.test_booking.AvailableSlotsTest.test_slots_returned_for_open_day)
+Should return slots from open to close. ... ok
+test_time_block_excluded (core.tests.test_booking.AvailableSlotsTest.test_time_block_excluded)
+Slots overlapping a time block are excluded. ... ok
+test_booking_after_closing_rejected (core.tests.test_booking.BookingOutsideHoursTest.test_booking_after_closing_rejected) ... ok
+test_booking_before_opening_rejected (core.tests.test_booking.BookingOutsideHoursTest.test_booking_before_opening_rejected) ... ok
+test_booking_on_closed_day_rejected (core.tests.test_booking.BookingOutsideHoursTest.test_booking_on_closed_day_rejected) ... ok
+test_booking_with_no_hours_rejected (core.tests.test_booking.BookingOutsideHoursTest.test_booking_with_no_hours_rejected) ... ok
+test_double_booking_prevented (core.tests.test_booking.DoubleBookingTest.test_double_booking_prevented)
+Second customer cannot book the same slot. ... ok
+test_first_booking_succeeds (core.tests.test_booking.DoubleBookingTest.test_first_booking_succeeds) ... ok
+test_overlapping_booking_prevented (core.tests.test_booking.DoubleBookingTest.test_overlapping_booking_prevented)
+Booking that overlaps existing booking is prevented. ... ok
+test_owner_cannot_access_other_business_bookings (core.tests.test_booking.OwnerIsolationTest.test_owner_cannot_access_other_business_bookings)
+Owner 1 trying to access owner 2's bookings is forbidden. ... ok
+test_owner_cannot_delete_other_business_service (core.tests.test_booking.OwnerIsolationTest.test_owner_cannot_delete_other_business_service)
+Owner cannot delete another owner's service. ... ok
+test_owner_service_edit_other_business_returns_404 (core.tests.test_booking.OwnerIsolationTest.test_owner_service_edit_other_business_returns_404)
+Owner cannot edit another owner's service (gets 404). ... ok
+test_booking_in_past_rejected (core.tests.test_booking.PastBookingTest.test_booking_in_past_rejected)
+Booking in the past raises ValidationError. ... ok
+test_booking_today_past_time_rejected (core.tests.test_booking.PastBookingTest.test_booking_today_past_time_rejected)
+Booking today at an already-passed time is rejected. ... ok
+test_basis_label_present (core.tests.test_busy_level.BusyLevelTest.test_basis_label_present)
+The heuristic label is always returned so the UI can show it. ... ok
+test_busy_slot (core.tests.test_busy_level.BusyLevelTest.test_busy_slot)
+A slot well above the mean is Busy and suggests quieter nearby slots. ... ok
+test_cancelled_and_pending_not_counted (core.tests.test_busy_level.BusyLevelTest.test_cancelled_and_pending_not_counted)
+Cancelled, pending and no-show bookings are not treated as real demand. ... ok
+test_normal_slot (core.tests.test_busy_level.BusyLevelTest.test_normal_slot)
+A slot whose historical count is near the mean is Normal. ... ok
+test_not_enough_data (core.tests.test_busy_level.BusyLevelTest.test_not_enough_data)
+With fewer than 5 total real bookings, every slot is 'Not enough data'. ... ok
+test_quiet_slot (core.tests.test_busy_level.BusyLevelTest.test_quiet_slot)
+A slot whose historical count is well below the mean is Quiet. ... ok
+test_contains_awaiting_verification (core.tests.test_home_roles.AdminHomeTest.test_contains_awaiting_verification) ... ok
+test_contains_platform_title (core.tests.test_home_roles.AdminHomeTest.test_contains_platform_title) ... ok
+test_contains_stats (core.tests.test_home_roles.AdminHomeTest.test_contains_stats) ... ok
+test_does_not_show_customer_or_owner_sections (core.tests.test_home_roles.AdminHomeTest.test_does_not_show_customer_or_owner_sections) ... ok
+test_home_returns_200 (core.tests.test_home_roles.AdminHomeTest.test_home_returns_200) ... ok
+test_unverified_business_appears (core.tests.test_home_roles.AdminHomeTest.test_unverified_business_appears) ... ok
+test_uses_admin_template (core.tests.test_home_roles.AdminHomeTest.test_uses_admin_template) ... ok
+test_verified_business_not_in_waiting_list (core.tests.test_home_roles.AdminHomeTest.test_verified_business_not_in_waiting_list) ... ok
+test_contains_how_it_works (core.tests.test_home_roles.AnonymousHomeTest.test_contains_how_it_works) ... ok
+test_contains_register_link (core.tests.test_home_roles.AnonymousHomeTest.test_contains_register_link) ... ok
+test_contains_sign_in_link (core.tests.test_home_roles.AnonymousHomeTest.test_contains_sign_in_link) ... ok
+test_home_returns_200 (core.tests.test_home_roles.AnonymousHomeTest.test_home_returns_200) ... ok
+test_no_demo_banner (core.tests.test_home_roles.AnonymousHomeTest.test_no_demo_banner) ... ok
+test_no_my_bookings_in_anonymous_home (core.tests.test_home_roles.AnonymousHomeTest.test_no_my_bookings_in_anonymous_home)
+Private booking data must not appear for anonymous users. ... ok
+test_uses_anonymous_template (core.tests.test_home_roles.AnonymousHomeTest.test_uses_anonymous_template) ... ok
+test_contains_find_service_search (core.tests.test_home_roles.CustomerHomeTest.test_contains_find_service_search) ... ok
+test_contains_greeting (core.tests.test_home_roles.CustomerHomeTest.test_contains_greeting) ... ok
+test_contains_upcoming_bookings_section (core.tests.test_home_roles.CustomerHomeTest.test_contains_upcoming_bookings_section) ... ok
+test_does_not_show_owner_sections (core.tests.test_home_roles.CustomerHomeTest.test_does_not_show_owner_sections) ... ok
+test_home_returns_200 (core.tests.test_home_roles.CustomerHomeTest.test_home_returns_200) ... ok
+test_shows_customer_booking (core.tests.test_home_roles.CustomerHomeTest.test_shows_customer_booking)
+An upcoming booking for this customer appears on their home. ... ok
+test_uses_customer_template (core.tests.test_home_roles.CustomerHomeTest.test_uses_customer_template) ... ok
+test_anonymous_returns_anonymous (core.tests.test_home_roles.GetUserRoleTest.test_anonymous_returns_anonymous) ... ok
+test_customer_returns_customer (core.tests.test_home_roles.GetUserRoleTest.test_customer_returns_customer) ... ok
+test_none_returns_anonymous (core.tests.test_home_roles.GetUserRoleTest.test_none_returns_anonymous) ... ok
+test_owner_returns_owner (core.tests.test_home_roles.GetUserRoleTest.test_owner_returns_owner) ... ok
+test_staff_returns_admin (core.tests.test_home_roles.GetUserRoleTest.test_staff_returns_admin) ... ok
+test_admin_redirects_to_home (core.tests.test_home_roles.LoginRedirectTest.test_admin_redirects_to_home) ... ok
+test_customer_redirects_to_home (core.tests.test_home_roles.LoginRedirectTest.test_customer_redirects_to_home) ... ok
+test_owner_redirects_to_home (core.tests.test_home_roles.LoginRedirectTest.test_owner_redirects_to_home) ... ok
+test_contains_business_name (core.tests.test_home_roles.OwnerHomeTest.test_contains_business_name) ... ok
+test_contains_pending_approvals (core.tests.test_home_roles.OwnerHomeTest.test_contains_pending_approvals) ... ok
+test_contains_todays_schedule (core.tests.test_home_roles.OwnerHomeTest.test_contains_todays_schedule) ... ok
+test_does_not_show_anonymous_hero (core.tests.test_home_roles.OwnerHomeTest.test_does_not_show_anonymous_hero) ... ok
+test_does_not_show_customer_sections (core.tests.test_home_roles.OwnerHomeTest.test_does_not_show_customer_sections) ... ok
+test_home_returns_200 (core.tests.test_home_roles.OwnerHomeTest.test_home_returns_200) ... ok
+test_owner_cannot_see_other_business_pending (core.tests.test_home_roles.OwnerHomeTest.test_owner_cannot_see_other_business_pending)
+Owner's home only shows their own pending bookings. ... ok
+test_pending_booking_appears (core.tests.test_home_roles.OwnerHomeTest.test_pending_booking_appears)
+A pending booking for this business appears on the owner home. ... ok
+test_uses_owner_template (core.tests.test_home_roles.OwnerHomeTest.test_uses_owner_template) ... ok
+test_autopay_off_without_email (core.tests.test_paystack.PaystackFlowTests.test_autopay_off_without_email) ... ok
+test_booking_detail_shows_pay_button_when_unpaid (core.tests.test_paystack.PaystackFlowTests.test_booking_detail_shows_pay_button_when_unpaid) ... ok
+test_confirm_redirects_to_pay_page_with_autopay (core.tests.test_paystack.PaystackFlowTests.test_confirm_redirects_to_pay_page_with_autopay) ... ok
+test_initialize_cancelled_booking_rejected (core.tests.test_paystack.PaystackFlowTests.test_initialize_cancelled_booking_rejected) ... ok
+test_initialize_falls_back_to_account_email (core.tests.test_paystack.PaystackFlowTests.test_initialize_falls_back_to_account_email) ... ok
+test_initialize_ignores_amount_sent_by_browser (core.tests.test_paystack.PaystackFlowTests.test_initialize_ignores_amount_sent_by_browser) ... ok
+test_initialize_rejects_other_customers_booking (core.tests.test_paystack.PaystackFlowTests.test_initialize_rejects_other_customers_booking) ... ok
+test_initialize_reports_unconfigured_keys (core.tests.test_paystack.PaystackFlowTests.test_initialize_reports_unconfigured_keys) ... ok
+test_initialize_requires_post_and_login (core.tests.test_paystack.PaystackFlowTests.test_initialize_requires_post_and_login) ... ok
+test_initialize_requires_valid_email_when_user_has_none (core.tests.test_paystack.PaystackFlowTests.test_initialize_requires_valid_email_when_user_has_none) ... ok
+test_initialize_returns_access_code_and_uses_server_side_amount (core.tests.test_paystack.PaystackFlowTests.test_initialize_returns_access_code_and_uses_server_side_amount) ... ok
+test_initialize_surfaces_paystack_error (core.tests.test_paystack.PaystackFlowTests.test_initialize_surfaces_paystack_error) ... Paystack initialize rejected for booking 1: Currency not supported by merchant
+ok
+test_other_customer_cannot_open_pay_page (core.tests.test_paystack.PaystackFlowTests.test_other_customer_cannot_open_pay_page) ... ok
+test_paid_booking_cannot_be_initialized_again (core.tests.test_paystack.PaystackFlowTests.test_paid_booking_cannot_be_initialized_again) ... ok
+test_paid_booking_redirects_away_from_pay_page_and_shows_receipt (core.tests.test_paystack.PaystackFlowTests.test_paid_booking_redirects_away_from_pay_page_and_shows_receipt) ... ok
+test_pay_page_renders_with_paystack_script (core.tests.test_paystack.PaystackFlowTests.test_pay_page_renders_with_paystack_script) ... ok
+test_retry_creates_new_reference_when_old_attempt_unpaid (core.tests.test_paystack.PaystackFlowTests.test_retry_creates_new_reference_when_old_attempt_unpaid) ... ok
+test_retry_detects_earlier_attempt_that_actually_succeeded (core.tests.test_paystack.PaystackFlowTests.test_retry_detects_earlier_attempt_that_actually_succeeded) ... ok
+test_revenue_counts_paid_payments (core.tests.test_paystack.PaystackFlowTests.test_revenue_counts_paid_payments) ... ok
+test_verify_failed_transaction_marks_failed (core.tests.test_paystack.PaystackFlowTests.test_verify_failed_transaction_marks_failed) ... ok
+test_verify_other_customer_blocked (core.tests.test_paystack.PaystackFlowTests.test_verify_other_customer_blocked) ... ok
+test_verify_paystack_unreachable (core.tests.test_paystack.PaystackFlowTests.test_verify_paystack_unreachable) ... Paystack verify failed for BM1-5c538aac403f
+Traceback (most recent call last):
+  File "C:\Users\user\Downloads\bookmtaani\bookmtaani\core\views.py", line 448, in _paystack_verify
+    res = requests.get(
+        f"{settings.PAYSTACK_BASE_URL}/transaction/verify/{reference}",
+        headers=_paystack_headers(),
+        timeout=PAYSTACK_TIMEOUT,
+    )
+  File "C:\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError
+ok
+test_verify_success_marks_paid_and_confirms_booking (core.tests.test_paystack.PaystackFlowTests.test_verify_success_marks_paid_and_confirms_booking) ... ok
+test_verify_without_payment_started (core.tests.test_paystack.PaystackFlowTests.test_verify_without_payment_started) ... ok
+test_verify_wrong_amount_is_not_marked_paid (core.tests.test_paystack.PaystackFlowTests.test_verify_wrong_amount_is_not_marked_paid) ... Paystack amount/currency mismatch for BM1-0acb8b675a48: got 100 KES, expected 50000 KES
+ok
+test_verify_wrong_currency_is_not_marked_paid (core.tests.test_paystack.PaystackFlowTests.test_verify_wrong_currency_is_not_marked_paid) ... Paystack amount/currency mismatch for BM1-b32bc86c7430: got 50000 NGN, expected 50000 KES
+ok
+test_webhook_charge_success_marks_paid (core.tests.test_paystack.PaystackFlowTests.test_webhook_charge_success_marks_paid) ... ok
+test_webhook_get_not_allowed (core.tests.test_paystack.PaystackFlowTests.test_webhook_get_not_allowed) ... ok
+test_webhook_is_idempotent_and_does_not_need_login (core.tests.test_paystack.PaystackFlowTests.test_webhook_is_idempotent_and_does_not_need_login) ... ok
+test_webhook_rejects_bad_signature (core.tests.test_paystack.PaystackFlowTests.test_webhook_rejects_bad_signature) ... ok
+test_webhook_rejects_signature_from_wrong_key (core.tests.test_paystack.PaystackFlowTests.test_webhook_rejects_signature_from_wrong_key) ... ok
+test_webhook_unknown_reference_is_ignored (core.tests.test_paystack.PaystackFlowTests.test_webhook_unknown_reference_is_ignored) ... Paystack webhook for unknown reference nope
+ok
+test_webhook_wrong_amount_not_marked_paid (core.tests.test_paystack.PaystackFlowTests.test_webhook_wrong_amount_not_marked_paid) ... Paystack amount/currency mismatch for BM1-fce03d2937ec: got 1 KES, expected 50000 KES
+ok
+
+----------------------------------------------------------------------
+Ran 95 tests in 241.513s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...

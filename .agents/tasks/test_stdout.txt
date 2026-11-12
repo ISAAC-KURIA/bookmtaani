@@ -1,0 +1,33 @@
+Found 95 test(s).
+System check identified no issues (0 silenced).
+Creating test database for alias 'default'...
+
+.........................................................................Paystack initialize rejected for booking 1: Currency not supported by merchant
+..........Paystack verify failed for BM1-845404efb00e
+Traceback (most recent call last):
+  File "c:\Users\user\Downloads\bookmtaani\bookmtaani\core\views.py", line 448, in _paystack_verify
+    res = requests.get(
+        f"{settings.PAYSTACK_BASE_URL}/transaction/verify/{reference}",
+        headers=_paystack_headers(),
+        timeout=PAYSTACK_TIMEOUT,
+    )
+  File "C:\Python314\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+requests.exceptions.ConnectionError
+...Paystack amount/currency mismatch for BM1-0a6991e7d3b4: got 100 KES, expected 50000 KES
+.Paystack amount/currency mismatch for BM1-b46761c6741a: got 50000 NGN, expected 50000 KES
+......Paystack webhook for unknown reference nope
+.Paystack amount/currency mismatch for BM1-c7781ff285aa: got 1 KES, expected 50000 KES
+.
+----------------------------------------------------------------------
+Ran 95 tests in 226.108s
+
+OK
+Destroying test database for alias 'default'...
+
