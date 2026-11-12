@@ -1,0 +1,9 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "`can_review()` relies on descriptor exception behavior — Booking.can_review() uses `not hasattr(self, 'review')` which works via Django's reverse OneToOne raising RelatedObjectDoesNotExist but is fragile. Replace with `not Review.objects.filter(booking=self).exists()` for explicit semantics.",
+    "`select_for_update()` is a no-op on SQLite — the comment in services.py overstates the database-level protection. Logical overlap check still prevents duplicates in single-process use. Worth noting in Known Limitations.",
+    "`demo_admin` UserProfile role is 'owner' — signing in as demo_admin could navigate to the owner dashboard instead of Django admin. The demo script routes straight to /django-admin/ so it doesn't surface in the walkthrough, but consider giving demo_admin a 'customer' role in seed_demo to avoid confusion."
+  ],
+  "reviewDoc": "c:\\Users\\user\\Desktop\\bookmtaani\\.agents\\tasks\\review.md"
+}

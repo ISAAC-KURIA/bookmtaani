@@ -4,12 +4,7 @@
 <div class="page-wrapper">
   <div class="page-header">
     <h1><i class="fas fa-bell"></i> Notifications</h1>
-    <p class="text-muted">Simulated SMS reminders for your bookings</p>
-  </div>
-
-  <div class="alert alert-info mb-2">
-    <i class="fas fa-info-circle"></i>
-    These are <strong>simulated SMS reminders</strong>. In a real deployment, these would be sent via Africa's Talking or similar SMS provider.
+    <p class="text-muted">Reminders for your upcoming bookings</p>
   </div>
 
   {% if notifications %}
@@ -22,9 +17,8 @@
           <div style="flex:1">
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.4rem">
               <span style="font-weight:600; font-size:0.9rem">{{ n.booking.service.business.name }}</span>
-              <span class="badge" style="background:#F3F4F6; color:var(--color-secondary)">Simulated SMS</span>
             </div>
-            <p style="font-family:monospace; font-size:0.88rem; background:var(--color-card); padding:0.6rem 0.75rem; border-radius:4px; margin-bottom:0.4rem; color:var(--color-text)">{{ n.content }}</p>
+            <p style="font-family:monospace; font-size:0.88rem; background:var(--color-card); padding:0.6rem 0.75rem; border-radius:4px; margin-bottom:0.4rem; color:var(--color-text)">{{ n.content|cut:"[SIMULATED SMS] " }}</p>
             <div style="font-size:0.8rem; color:var(--color-secondary)">
               <i class="fas fa-clock"></i> Scheduled for {{ n.scheduled_at|date:"d M Y, H:i" }}
               &bull; Booking: {{ n.booking.date|date:"d M Y" }} at {{ n.booking.start_time|time:"H:i" }}

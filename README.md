@@ -58,7 +58,7 @@ The admin account also has access to Django admin at `/django-admin/`.
 
 ## What is Simulated
 
-- **M-Pesa payments**: Fake STK push screen. Enter any PIN except `0000` to simulate success. Use `0000` to simulate failure. No real money moves.
+- **Payments** are handled by Paystack (see below). Use `sk_test_` / `pk_test_` keys and Paystack's test cards for demos - no real money moves in test mode.
 - **SMS reminders**: Generated as in-app notification records; no real SMS is sent.
 - **AI busy-time insight**: Rule-based statistical analysis of seed booking data. No external AI service used.
 - **All seed data**: Fictional businesses, customers, and booking history. No real personal information.
@@ -141,3 +141,16 @@ bookmtaani/
 ---
 
 *Built for hackathon demo purposes. All data is fictional.*
+
+---
+
+## Paystack setup
+
+1. `pip install -r requirements.txt` (adds `requests`), then `python manage.py migrate`.
+2. Put your keys in `bookmtaani/settings.py` (replace the `REPLACE_WITH_YOUR_...` placeholders) **or** set the
+   `PAYSTACK_SECRET_KEY` / `PAYSTACK_PUBLIC_KEY` environment variables. Never commit real keys.
+3. In the Paystack dashboard (Settings > API Keys & Webhooks) set the webhook URL to
+   `https://YOUR-DOMAIN/paystack/webhook/`. Paystack cannot reach `localhost`, so the webhook only works once deployed
+   (or through a tunnel such as ngrok). Payments still complete locally because the browser also asks the server to verify.
+4. Click any Pay button: the server starts the transaction, the Paystack popup opens, and the server re-verifies
+   the payment with Paystack before confirming the booking. Amounts always come from the database.

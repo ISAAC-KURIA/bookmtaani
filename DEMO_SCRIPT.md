@@ -14,6 +14,27 @@
 
 ---
 
+## Part 0 — Show Role-Aware Home Pages (~30 seconds)
+
+Before anything else, demonstrate that the home page changes by role.
+
+1. Open `http://localhost:8000/` while logged out.
+   - Show the **public landing page**: value statement, "How it works" three-step row, business search.
+   - Point out the amber **Demo mode** banner at the top — always visible.
+
+2. Sign in as **demo_customer / Customer123!**
+   - The home page changes to the **customer home**: personal greeting, "Upcoming Bookings" panel, "Find a Service" search, "Book Again" shortcuts.
+
+3. Sign out, then sign in as **demo_owner / Owner123!**
+   - The home page changes to the **owner home**: green hero with the business name and town, today's schedule, pending approvals with Confirm/Decline buttons, and this week's stats.
+
+4. Sign out, then sign in as **demo_admin / Admin123!**
+   - The home page changes to the **admin home**: dark header, platform-wide stats, "Businesses Awaiting Verification" list with Verify buttons, quick links to Django admin.
+
+> **Talk track:** "One URL, four completely different pages. Each role gets exactly what they need — no clutter, no confusion. The nav also changes: owners see Dashboard/Bookings/Analytics; customers see My Bookings/Notifications; admins see Platform/Django Admin."
+
+---
+
 ## Part 1 — Admin Verifies a Business (~30 seconds)
 
 1. Open `http://localhost:8000/accounts/login/`
@@ -36,6 +57,7 @@
 1. Open a new private/incognito tab (or sign out).
 2. Go to `http://localhost:8000/accounts/register/`
 3. Register as a new customer, or use the **Customer** demo button on the login page.
+4. After login you land on the **customer home** — not a generic page — with your upcoming bookings and the search panel ready.
 
 ### 2b. Find a business
 

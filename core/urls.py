@@ -17,7 +17,10 @@ urlpatterns = [
     path('book/<int:service_id>/', views.booking_form, name='booking_form'),
     path('book/<int:service_id>/slots/', views.available_slots_json, name='available_slots'),
     path('book/<int:service_id>/confirm/<str:date>/<str:time>/', views.booking_confirm, name='booking_confirm'),
-    path('booking/<int:booking_id>/mpesa/', views.mpesa_payment, name='mpesa_payment'),
+    path('booking/<int:booking_id>/pay/', views.pay_booking, name='pay_booking'),
+    path('booking/<int:booking_id>/pay/initialize/', views.paystack_initialize, name='paystack_initialize'),
+    path('booking/<int:booking_id>/pay/verify/', views.paystack_verify, name='paystack_verify'),
+    path('paystack/webhook/', views.paystack_webhook, name='paystack_webhook'),
     path('booking/<int:booking_id>/', views.booking_detail, name='booking_detail'),
 
     # Customer

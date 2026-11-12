@@ -197,23 +197,53 @@ class Booking(models.Model):
 
 class Payment(models.Model):
     STATUS_PENDING = 'pending'
-    STATUS_SUCCESS = 'simulated_success'
-    STATUS_FAILED = 'simulated_failed'
+    STATUS_SUCCESS = 'simulated_success'   # legacy demo payments (old simulated M-Pesa screen)
+    STATUS_FAILED = 'simulated_failed'     # legacy demo payments
+    STATUS_PAID = 'paid'                   # confirmed by Paystack
+    STATUS_DECLINED = 'failed'             # failed / abandoned on Paystack
     STATUS_CHOICES = [
         (STATUS_PENDING, 'Pending'),
         (STATUS_SUCCESS, 'Simulated Success'),
         (STATUS_FAILED, 'Simulated Failed'),
+        (STATUS_PAID, 'Paid'),
+        (STATUS_DECLINED, 'Failed'),
     ]
+    # Statuses that count as money received (used for revenue totals)
+    PAID_STATUSES = (STATUS_SUCCESS, STATUS_PAID)
+
+    CHANNEL_LABELS = {
+        'card': 'Card',
+        'mobile_money': 'Mobile money',
+        'bank': 'Bank',
+        'bank_transfer': 'Bank transfer',
+        'ussd': 'USSD',
+        'qr': 'QR',
+        'eft': 'EFT',
+        'apple_pay': 'Apple Pay',
+    }
+
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='payment')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    method = models.CharField(max_length=30, default='mpesa_simulated')
+    method = models.CharField(max_length=30, default='paystack')
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_PENDING)
-    transaction_ref = models.CharField(max_length=50, blank=True)
+    transaction_ref = models.CharField(max_length=50, blank=True, db_index=True)
+    channel = models.CharField(max_length=30, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     phone_number = models.CharField(max_length=20, blank=True)
 
     def __str__(self):
         return f"Payment for {self.booking} - {self.status}"
+
+    @property
+    def is_paid(self):
+        return self.status in self.PAID_STATUSES
+
+    @property
+    def channel_label(self):
+        if not self.channel:
+            return ''
+        return self.CHANNEL_LABELS.get(self.channel, self.channel.replace('_', ' ').title())
 
 
 class SMSNotification(models.Model):

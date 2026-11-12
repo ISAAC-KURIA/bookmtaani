@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Owner Dashboard{% endblock %}
+{% block content %}
+
+{# ── Hero ── #}
+<div class="home-hero home-hero-owner">
+  <div class="home-hero-inner">
+    <h1><i class="fas fa-store"></i> {{ business.name }}</h1>
+    <p>{{ business.town }} &bull; {{ business.get_category_display }}</p>
+    <div class="home-hero-actions">
+      <a href="{% url 'core:owner_dashboard' %}" class="btn btn-secondary" style="color:#fff;border-color:rgba(255,255,255,.3)">
+        <i class="fas fa-tachometer-alt"></i> Full Dashboard
+      </a>
+      <a href="{% url 'core:owner_bookings' %}" class="btn btn-secondary" style="color:#fff;border-color:rgba(255,255,255,.3)">
+        <i class="fas fa-calendar-alt"></i> All Bookings
+      </a>
+      <a href="{% url 'core:owner_analytics' %}" class="btn btn-secondary" style="color:#fff;border-color:rgba(255,255,255,.3)">
+        <i class="fas fa-chart-bar"></i> Analytics
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  {# ── Stats row ── #}
+  <div class="stats-grid mb-2">
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--color-green)">{{ week_bookings_count }}</div>
+      <div class="stat-label"><i class="fas fa-calendar-alt"></i> Bookings this week</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--color-green)">{{ pending_bookings|length }}</div>
+      <div class="stat-label"><i class="fas fa-hourglass-half"></i> Pending approvals</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--color-brand)">KES {{ week_revenue }}</div>
+      <div class="stat-label"><i class="fas fa-coins"></i> Revenue this week</div>
+    </div>
+  </div>
+
+  <div class="home-two-col">
+
+    {# ── Today's schedule ── #}
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <i class="fas fa-clock" style="color:var(--color-brand)"></i>
+          Today's Schedule
+          <span class="text-muted" style="font-weight:400;font-size:.85rem"> &mdash; {{ today|date:"D, d M Y" }}</span>
+        </div>
+        {% if todays_bookings %}
+          {% for b in todays_bookings %}
+            <div class="timeline-item">
+              <span class="timeline-time">{{ b.start_time|time:"g:i A" }}</span>
+              <div>
+                <div style="font-weight:600;font-size:.93rem">{{ b.service.name }}</div>
+                <div style="font-size:.82rem;color:var(--color-secondary)">
+                  <i class="fas fa-user"></i>
+                  {{ b.customer.get_full_name|default:b.customer.username }}
+                </div>
+                <span class="badge badge-status-{{ b.status }}">{{ b.get_status_display }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state" style="padding:1.5rem">
+            <i class="fas fa-calendar-day"></i>
+            <p>No bookings scheduled for today.</p>
+          </div>
+        {% endif %}
+        <a href="{% url 'core:owner_dashboard' %}" class="btn btn-secondary btn-sm mt-2">
+          <i class="fas fa-tachometer-alt"></i> Full dashboard
+        </a>
+      </div>
+    </div>
+
+    {# ── Pending approvals ── #}
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <i class="fas fa-hourglass-half" style="color:var(--color-warning)"></i>
+          Pending Approvals
+        </div>
+        {% if pending_bookings %}
+          <div class="approval-list">
+            {% for b in pending_bookings %}
+              <div class="approval-item">
+                <div class="approval-item-info">
+                  <span class="approval-item-name">{{ b.customer.get_full_name|default:b.customer.username }}</span>
+                  <span class="approval-item-meta">
+                    {{ b.service.name }} &bull;
+                    {{ b.date|date:"D d M" }} at {{ b.start_time|time:"g:i A" }}
+                    &bull; KES {{ b.service.price }}
+                  </span>
+                </div>
+                <div class="approval-actions">
+                  <form method="post" action="{% url 'core:owner_booking_action' b.id %}" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="confirm">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                      <i class="fas fa-check"></i> Confirm
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'core:owner_booking_action' b.id %}" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      <i class="fas fa-times"></i> Decline
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <a href="{% url 'core:owner_bookings' %}?status=pending" class="btn btn-secondary btn-sm mt-2">
+            <i class="fas fa-list"></i> View all pending
+          </a>
+        {% else %}
+          <div class="empty-state" style="padding:1.5rem">
+            <i class="fas fa-check-double" style="color:var(--color-green)"></i>
+            <p>No pending approvals. All caught up!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

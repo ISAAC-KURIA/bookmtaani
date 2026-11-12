@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Platform Admin Home{% endblock %}
+{% block content %}
+
+{# ── Hero ── #}
+<div class="home-hero home-hero-admin">
+  <div class="home-hero-inner">
+    <h1><i class="fas fa-shield-alt"></i> Platform Administration</h1>
+    <p>Manage and verify businesses, monitor platform health.</p>
+    <div class="home-hero-actions">
+      <a href="{% url 'core:platform_totals' %}" class="btn btn-primary">
+        <i class="fas fa-chart-pie"></i> Platform Totals
+      </a>
+      <a href="{% url 'admin:index' %}" target="_blank" class="btn btn-secondary" style="color:#fff;border-color:rgba(255,255,255,.3)">
+        <i class="fas fa-cog"></i> Django Admin
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  {# ── Platform totals ── #}
+  <div class="stats-grid mb-2">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_businesses }}</div>
+      <div class="stat-label"><i class="fas fa-store"></i> Total businesses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--color-green)">{{ verified_businesses }}</div>
+      <div class="stat-label"><i class="fas fa-check-circle"></i> Verified</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_bookings }}</div>
+      <div class="stat-label"><i class="fas fa-calendar-check"></i> Total bookings</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--color-green)">KES {{ total_revenue }}</div>
+      <div class="stat-label">
+        <i class="fas fa-coins"></i> Revenue
+      </div>
+    </div>
+  </div>
+
+  <div class="home-two-col">
+
+    {# ── Businesses awaiting verification ── #}
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <i class="fas fa-clock" style="color:var(--color-warning)"></i>
+          Awaiting Verification
+        </div>
+        {% if unverified %}
+          <p class="text-muted mb-1" style="font-size:.85rem">
+            {{ unverified|length }} business{{ unverified|length|pluralize }} pending.
+            Use the Django admin to verify in bulk.
+          </p>
+          <div class="verify-list">
+            {% for b in unverified %}
+              <div class="verify-item">
+                <div class="verify-item-info">
+                  <span class="verify-item-name">{{ b.name }}</span>
+                  <span class="verify-item-meta">
+                    {{ b.get_category_display }} &bull; {{ b.town }}
+                  </span>
+                </div>
+                <a href="{% url 'admin:core_business_change' b.id %}"
+                   target="_blank"
+                   class="btn btn-primary btn-sm">
+                  <i class="fas fa-check"></i> Verify
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+          <a href="{% url 'admin:core_business_changelist' %}" target="_blank"
+             class="btn btn-secondary btn-sm mt-2">
+            <i class="fas fa-list"></i> Manage all in admin
+          </a>
+        {% else %}
+          <div class="empty-state" style="padding:1.5rem">
+            <i class="fas fa-check-double" style="color:var(--color-green)"></i>
+            <p>All businesses are verified.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Admin quick links ── #}
+    <div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-bolt" style="color:var(--color-brand)"></i> Quick Links</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <a href="{% url 'admin:auth_user_changelist' %}" target="_blank"
+             class="btn btn-secondary" style="justify-content:flex-start">
+            <i class="fas fa-users"></i> Manage Users
+          </a>
+          <a href="{% url 'admin:core_business_changelist' %}" target="_blank"
+             class="btn btn-secondary" style="justify-content:flex-start">
+            <i class="fas fa-store"></i> Manage Businesses
+          </a>
+          <a href="{% url 'admin:core_booking_changelist' %}" target="_blank"
+             class="btn btn-secondary" style="justify-content:flex-start">
+            <i class="fas fa-calendar-alt"></i> Manage Bookings
+          </a>
+          <a href="{% url 'core:platform_totals' %}"
+             class="btn btn-brand" style="justify-content:flex-start">
+            <i class="fas fa-chart-pie"></i> Platform Totals with Charts
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

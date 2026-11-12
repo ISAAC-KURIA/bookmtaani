@@ -2,6 +2,24 @@
 Booking logic service functions.
 All booking validation and creation goes here.
 """
+
+
+def get_user_role(user):
+    """
+    Return the role string for a user.
+    Values: 'anonymous', 'admin', 'owner', 'customer'
+    'admin' means Django staff (is_staff=True).
+    'owner' and 'customer' come from UserProfile.role.
+    """
+    if not user or not user.is_authenticated:
+        return 'anonymous'
+    if user.is_staff:
+        return 'admin'
+    try:
+        profile = user.profile
+        return profile.role  # 'owner' or 'customer'
+    except Exception:
+        return 'customer'
 from datetime import datetime, timedelta, date as date_type
 from django.db import transaction
 from django.utils import timezone
@@ -193,7 +211,7 @@ def create_sms_notifications(booking):
     for hours_before, label in [(24, '24-hour'), (1, '1-hour')]:
         scheduled = booking_dt - timedelta(hours=hours_before)
         content = (
-            f"[SIMULATED SMS] Hi {customer_name}, reminder: your {service_name} "
+            f"Hi {customer_name}, reminder: your {service_name} "
             f"appointment at {business.name} is on {date_str} at {time_str}. "
             f"This is your {label} reminder. — BookMtaani"
         )

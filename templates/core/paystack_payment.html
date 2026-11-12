@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Pay for Booking{% endblock %}
+{% block content %}
+<div class="page-wrapper" style="max-width:480px">
+  <div class="pay-card">
+    <div class="pay-brand"><i class="fas fa-lock"></i> Secure payment</div>
+    <p class="pay-sub">A secure Paystack window will open where you choose how to pay.</p>
+
+    <div class="card" style="text-align:left; margin-bottom:1.25rem">
+      <div style="font-size:0.82rem; color:var(--color-secondary); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.04em; font-weight:600">Booking Summary</div>
+      <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:0.3rem">
+        <span>{{ booking.service.business.name }}</span>
+        <span>{{ booking.service.name }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:0.3rem">
+        <span class="text-muted">Date</span>
+        <span>{{ booking.date|date:"d M Y" }} at {{ booking.start_time|time:"H:i" }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-weight:800; font-size:1.1rem; color:var(--color-green); margin-top:0.5rem">
+        <span>Total</span>
+        <span>KES {{ booking.service.price }}</span>
+      </div>
+    </div>
+
+    {% csrf_token %}
+    <div class="form-group text-left">
+      <label class="form-label" for="pay-email">Email for your receipt</label>
+      <input type="email" id="pay-email" class="form-input" value="{{ user_email }}"
+             placeholder="you@example.com" autocomplete="email">
+      <span class="form-error hidden" id="pay-email-error"></span>
+      <span class="form-help">Paystack sends your payment receipt to this address.</span>
+    </div>
+
+    <button type="button" class="btn btn-primary btn-lg w-full" style="justify-content:center" id="pay-btn">
+      <i class="fas fa-lock"></i> Pay KES {{ booking.service.price }}
+    </button>
+    <a href="{% url 'core:booking_detail' booking.id %}" class="btn btn-secondary w-full mt-1" style="justify-content:center">
+      <i class="fas fa-arrow-left"></i> Back to booking
+    </a>
+
+    <p style="font-size:0.78rem; color:var(--color-secondary); margin-top:1rem">
+      <i class="fas fa-info-circle"></i>
+      Payments are processed by Paystack. We never see or store your card or M-Pesa PIN.
+    </p>
+  </div>
+</div>
+
+{{ pay_config|json_script:"pay-config" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.paystack.co/v2/inline.js"></script>
+<script>
+(function () {
+  var cfg = JSON.parse(document.getElementById('pay-config').textContent);
+  var csrf = document.querySelector('input[name=csrfmiddlewaretoken]').value;
+  var btn = document.getElementById('pay-btn');
+  var emailInput = document.getElementById('pay-email');
+  var emailError = document.getElementById('pay-email-error');
+  var idleHtml = btn.innerHTML;
+  var busy = false;
+
+  /* ---------- Toasts: dismissible, centered at the top ---------- */
+  var stack = document.createElement('div');
+  stack.className = 'toast-stack';
+  stack.setAttribute('role', 'status');
+  stack.setAttribute('aria-live', 'polite');
+  document.body.appendChild(stack);
+
+  function toast(message, type, ms) {
+    type = type || 'info';
+    var icons = { success: 'check-circle', error: 'exclamation-circle', warning: 'exclamation-triangle', info: 'info-circle' };
+    var el = document.createElement('div');
+    el.className = 'toast toast-' + type;
+    el.innerHTML = '<i class="fas fa-' + icons[type] + '"></i><span class="toast-msg"></span>' +
+                   '<button type="button" class="toast-close" aria-label="Dismiss">&times;</button>';
+    el.querySelector('.toast-msg').textContent = message;
+    stack.appendChild(el);
+    var timer = setTimeout(remove, ms || 7000);
+    function remove() { clearTimeout(timer); if (el.parentNode) el.parentNode.removeChild(el); }
+    el.querySelector('.toast-close').addEventListener('click', remove);
+  }
+
+  /* ---------- Small helpers ---------- */
+  function setBusy(state, label) {
+    busy = state;
+    btn.disabled = state;
+    btn.innerHTML = state ? '<i class="fas fa-spinner fa-spin"></i> ' + label : idleHtml;
+  }
+
+  function showEmailError(message) {
+    emailError.textContent = message;
+    emailError.classList.remove('hidden');
+    emailInput.classList.add('input-error');
+    emailInput.focus();
+  }
+
+  function clearEmailError() {
+    emailError.textContent = '';
+    emailError.classList.add('hidden');
+    emailInput.classList.remove('input-error');
+  }
+
+  function postJSON(url, payload) {
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify(payload || {})
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        return { ok: res.ok, data: data };
+      });
+    });
+  }
+
+  function goToBooking(delay) {
+    setTimeout(function () { window.location.href = cfg.detailUrl; }, delay || 0);
+  }
+
+  /* ---------- After the popup reports success, let the server confirm with Paystack ---------- */
+  function confirmPayment() {
+    setBusy(true, 'Confirming payment...');
+    postJSON(cfg.verifyUrl).then(function (r) {
+      if (r.ok && r.data.status === 'paid') {
+        toast('Payment successful. Your booking is confirmed.', 'success');
+        goToBooking(1500);
+      } else if (r.ok && r.data.status === 'pending') {
+        toast('Your payment is still being processed. We will update your booking shortly.', 'info');
+        goToBooking(2500);
+      } else if (r.ok && r.data.status === 'mismatch') {
+        toast('We received a payment that does not match this booking. Please contact support.', 'error', 10000);
+        setBusy(false);
+      } else {
+        toast(r.data.error || 'We could not confirm your payment yet. Check your booking in a moment.', 'error');
+        goToBooking(3500);
+      }
+    }).catch(function () {
+      toast('Network problem while confirming your payment. Check your booking in a moment.', 'error');
+      goToBooking(3500);
+    });
+  }
+
+  /* ---------- Start: server creates the transaction, then the Paystack popup opens ---------- */
+  function startPayment() {
+    if (busy) return;
+    if (typeof PaystackPop === 'undefined') {
+      toast('Could not load Paystack. Check your internet connection and try again.', 'error');
+      return;
+    }
+
+    clearEmailError();
+    var email = emailInput.value.trim();
+    if (!email) {
+      showEmailError('Enter your email address.');
+      return;
+    }
+
+    setBusy(true, 'Opening secure payment...');
+    postJSON(cfg.initUrl, { email: email }).then(function (r) {
+      if (!r.ok) {
+        if (r.data.field === 'email') {
+          showEmailError(r.data.error);
+        } else {
+          toast(r.data.error || 'Could not start the payment. Please try again.', 'error');
+        }
+        setBusy(false);
+        return;
+      }
+      if (r.data.already_paid) {
+        toast('This booking is already paid.', 'success');
+        goToBooking(1000);
+        return;
+      }
+
+      var popup = new PaystackPop();
+      popup.resumeTransaction(r.data.access_code, {
+        onLoad: function () { setBusy(false); },
+        onSuccess: function () { confirmPayment(); },
+        onCancel: function () {
+          toast('Payment cancelled. You can try again when you are ready.', 'warning');
+          setBusy(false);
+        },
+        onError: function (err) {
+          toast((err && err.message) || 'The payment window could not be opened.', 'error');
+          setBusy(false);
+        }
+      });
+    }).catch(function () {
+      toast('Network problem. Please check your connection and try again.', 'error');
+      setBusy(false);
+    });
+  }
+
+  btn.addEventListener('click', startPayment);
+  emailInput.addEventListener('input', clearEmailError);
+  emailInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); startPayment(); }
+  });
+
+  // Arriving from "Confirm Booking & Pay": open the popup automatically
+  if (cfg.autopay) {
+    if (window.history && history.replaceState) {
+      history.replaceState(null, '', window.location.pathname);   // a refresh will not re-open it
+    }
+    startPayment();
+  }
+})();
+</script>
+{% endblock %}

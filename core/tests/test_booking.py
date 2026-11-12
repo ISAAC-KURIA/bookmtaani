@@ -20,6 +20,22 @@ from core.models import (
 from core.services import get_available_slots, create_booking
 
 
+# ---------------------------------------------------------------------------
+# Fix for Python 3.14 + Django 5.1: RequestContext.__copy__ crashes
+# (also Context, used when Django renders its built-in 404/500 pages)
+# ---------------------------------------------------------------------------
+def _patched_context_copy(self):
+    cls = type(self)
+    duplicate = cls.__new__(cls)
+    duplicate.__dict__.update(self.__dict__)
+    duplicate.dicts = self.dicts[:]
+    return duplicate
+
+from django.template.context import RequestContext, Context  # noqa: E402
+RequestContext.__copy__ = _patched_context_copy
+Context.__copy__ = _patched_context_copy
+
+
 def _make_user(username, role='customer'):
     u = User.objects.create_user(username=username, password='testpass123')
     UserProfile.objects.create(user=u, role=role)

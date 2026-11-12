@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+{# ── Hero ── #}
+<div class="home-hero">
+  <div class="home-hero-inner">
+    <h1>Welcome back, {{ request.user.get_full_name|default:request.user.username }}</h1>
+    <p>Find a service, check your bookings, or book again.</p>
+    <div class="home-hero-actions">
+      <a href="{% url 'core:my_bookings' %}" class="btn btn-primary">
+        <i class="fas fa-calendar-alt"></i> My Bookings
+      </a>
+      <a href="{% url 'core:notifications' %}" class="btn btn-secondary" style="color:#fff;border-color:rgba(255,255,255,.3)">
+        <i class="fas fa-bell"></i> Notifications
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="home-two-col">
+
+    {# ── Left column ── #}
+    <div>
+
+      {# Upcoming bookings #}
+      <div class="card mb-2">
+        <div class="card-title"><i class="fas fa-calendar-check" style="color:var(--color-brand)"></i> Upcoming Bookings</div>
+        {% if upcoming %}
+          <div style="display:flex;flex-direction:column;gap:.6rem">
+            {% for b in upcoming %}
+              <div class="upcoming-booking-card status-{{ b.status }}">
+                <div class="upcoming-booking-info">
+                  <span class="upcoming-booking-name">{{ b.service.name }}</span>
+                  <span class="upcoming-booking-meta">
+                    <i class="fas fa-store"></i> {{ b.service.business.name }} &bull;
+                    <i class="fas fa-calendar"></i> {{ b.date|date:"D, d M" }} at {{ b.start_time|time:"g:i A" }}
+                  </span>
+                  <span>
+                    <span class="badge badge-status-{{ b.status }}">{{ b.get_status_display }}</span>
+                    <span class="text-muted" style="font-size:.8rem"> &bull; KES {{ b.service.price }}</span>
+                  </span>
+                </div>
+                <a href="{% url 'core:booking_detail' b.id %}" class="btn btn-secondary btn-sm">
+                  <i class="fas fa-eye"></i> View
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+          <a href="{% url 'core:my_bookings' %}" class="btn btn-secondary btn-sm mt-2">
+            <i class="fas fa-list"></i> See all bookings
+          </a>
+        {% else %}
+          <div class="empty-state" style="padding:1.5rem">
+            <i class="fas fa-calendar-plus"></i>
+            <p>No upcoming bookings. Book a service below.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Book again shortcuts #}
+      {% if recent_businesses %}
+        <div class="card mb-2">
+          <div class="card-title"><i class="fas fa-redo" style="color:var(--color-green)"></i> Book Again</div>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            {% for b in recent_businesses %}
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem">
+                <div style="display:flex;align-items:center;gap:.6rem">
+                  <div class="business-icon" style="width:2rem;height:2rem;font-size:.9rem">
+                    <i class="fas {{ b.get_category_icon }}"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight:600;font-size:.9rem">{{ b.name }}</div>
+                    <div style="font-size:.8rem;color:var(--color-secondary)">{{ b.town }}</div>
+                  </div>
+                </div>
+                <a href="{% url 'core:business_detail' b.slug %}" class="btn btn-primary btn-sm">
+                  <i class="fas fa-calendar-plus"></i> Book
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {# Recent SMS notifications #}
+      {% if recent_notifications %}
+        <div class="card">
+          <div class="card-title">
+            <i class="fas fa-sms" style="color:var(--color-secondary)"></i>
+            Recent Reminders
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            {% for n in recent_notifications %}
+              <div class="sms-snippet">
+                <strong>{{ n.scheduled_at|date:"d M Y, g:i A" }}</strong>
+                {{ n.content|cut:"[SIMULATED SMS] "|truncatechars:120 }}
+              </div>
+            {% endfor %}
+          </div>
+          <a href="{% url 'core:notifications' %}" class="btn btn-secondary btn-sm mt-2">
+            <i class="fas fa-bell"></i> All notifications
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+
+    {# ── Right column: search ── #}
+    <div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-search" style="color:var(--color-brand)"></i> Find a Service</div>
+        <form method="get" action="{% url 'core:home' %}">
+          <div class="form-group">
+            <label class="form-label" for="search">Search</label>
+            <input id="search" type="text" name="search" class="form-input"
+                   placeholder="Business name..." value="{{ search_query }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="category">Category</label>
+            <select id="category" name="category" class="form-input">
+              <option value="">All Categories</option>
+              {% for val, label in categories %}
+                <option value="{{ val }}" {% if val == selected_category %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="town">Town</label>
+            <select id="town" name="town" class="form-input">
+              <option value="">All Towns</option>
+              {% for t in towns %}
+                <option value="{{ t }}" {% if t == selected_town %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-brand w-full">
+            <i class="fas fa-search"></i> Search
+          </button>
+          {% if selected_category or selected_town or search_query %}
+            <a href="{% url 'core:home' %}" class="btn btn-secondary btn-sm mt-1">
+              <i class="fas fa-times"></i> Clear filters
+            </a>
+          {% endif %}
+        </form>
+      </div>
+
+      {# Search results #}
+      {% if businesses %}
+        <p class="text-muted mb-1 mt-2">{{ businesses|length }} business{{ businesses|length|pluralize }} found</p>
+        <div style="display:flex;flex-direction:column;gap:.6rem;margin-top:.5rem">
+          {% for b in businesses %}
+            {% with avg=b.average_rating %}
+            <a href="{% url 'core:business_detail' b.slug %}" class="business-card" style="flex-direction:row;align-items:center;gap:.75rem;padding:.75rem 1rem">
+              <div class="business-icon" style="flex-shrink:0"><i class="fas {{ b.get_category_icon }}"></i></div>
+              <div style="flex:1;min-width:0">
+                <div class="business-name">{{ b.name }}</div>
+                <div class="business-meta">{{ b.town }} &bull; {{ b.get_category_display }}</div>
+                {% if avg %}<div style="font-size:.8rem;color:#F59E0B"><i class="fas fa-star"></i> {{ avg }}</div>{% endif %}
+              </div>
+              {% if b.is_verified %}<span class="badge badge-verified" style="flex-shrink:0"><i class="fas fa-check-circle"></i> Verified</span>{% endif %}
+            </a>
+            {% endwith %}
+          {% endfor %}
+        </div>
+      {% elif search_query or selected_category or selected_town %}
+        <div class="empty-state" style="padding:1.5rem">
+          <i class="fas fa-store-slash"></i>
+          <p>No businesses match your search.</p>
+          <a href="{% url 'core:home' %}" class="btn btn-secondary btn-sm mt-1">Clear filters</a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

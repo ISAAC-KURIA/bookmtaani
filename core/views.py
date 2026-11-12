@@ -1,17 +1,28 @@
+import hashlib
+import hmac
 import json
+import logging
 import uuid
 from datetime import datetime, date, timedelta
 from collections import defaultdict
+from decimal import Decimal
+
+import requests
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
+from django.db import transaction
 from django.db.models import Count, Sum, Avg, Q
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .models import (
@@ -21,9 +32,10 @@ from .models import (
 from .forms import (
     RegisterForm, BookingDateForm, ServiceForm, TimeBlockForm,
     BusinessHoursForm, ReviewForm, CustomerNoteForm, BusinessProfileForm,
-    MpesaForm,
 )
-from .services import get_available_slots, create_booking, create_sms_notifications
+from .services import get_available_slots, create_booking, create_sms_notifications, get_user_role
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -56,12 +68,12 @@ def _get_or_404_owner_business(user):
 # Public views
 # ---------------------------------------------------------------------------
 
-def home(request):
-    businesses = Business.objects.all()
+def _search_businesses(request):
+    """Shared business search logic used across home page variants."""
+    businesses = Business.objects.prefetch_related('services')
     category = request.GET.get('category', '')
     town = request.GET.get('town', '')
     search = request.GET.get('search', '')
-
     if category:
         businesses = businesses.filter(category=category)
     if town:
@@ -70,22 +82,169 @@ def home(request):
         businesses = businesses.filter(
             Q(name__icontains=search) | Q(description__icontains=search)
         )
-
-    # Annotate with average rating
-    businesses = businesses.prefetch_related('services')
-
     towns = Business.objects.values_list('town', flat=True).distinct().order_by('town')
-    categories = Business.CATEGORY_CHOICES
-
-    context = {
+    return businesses, {
         'businesses': businesses,
-        'categories': categories,
+        'categories': Business.CATEGORY_CHOICES,
         'towns': towns,
         'selected_category': category,
         'selected_town': town,
         'search_query': search,
     }
-    return render(request, 'core/home.html', context)
+
+
+def home(request):
+    role = get_user_role(request.user)
+
+    if role == 'admin':
+        return _home_admin(request)
+    elif role == 'owner':
+        return _home_owner(request)
+    elif role == 'customer':
+        return _home_customer(request)
+    else:
+        return _home_anonymous(request)
+
+
+def _home_anonymous(request):
+    """Landing page for visitors who are not logged in."""
+    businesses, search_ctx = _search_businesses(request)
+    context = {**search_ctx, 'role': 'anonymous'}
+    return render(request, 'core/home_anonymous.html', context)
+
+
+def _home_customer(request):
+    """Personalised home for logged-in customers."""
+    today = timezone.localtime(timezone.now()).date()
+
+    # Next 3 upcoming bookings
+    upcoming = (
+        Booking.objects.filter(
+            customer=request.user,
+            date__gte=today,
+            status__in=(Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED),
+        )
+        .select_related('service__business')
+        .order_by('date', 'start_time')[:3]
+    )
+
+    # Recently booked businesses (last 5 distinct, most recent first)
+    recent_business_ids = (
+        Booking.objects.filter(customer=request.user)
+        .exclude(status=Booking.STATUS_CANCELLED)
+        .order_by('-created_at')
+        .values_list('service__business_id', flat=True)
+    )
+    seen = []
+    for bid in recent_business_ids:
+        if bid not in seen:
+            seen.append(bid)
+        if len(seen) >= 5:
+            break
+    recent_businesses = []
+    for bid in seen:
+        try:
+            recent_businesses.append(Business.objects.get(pk=bid))
+        except Business.DoesNotExist:
+            pass
+
+    # Recent simulated SMS notifications (last 5)
+    recent_notifications = (
+        SMSNotification.objects.filter(booking__customer=request.user)
+        .select_related('booking__service__business')
+        .order_by('-scheduled_at')[:5]
+    )
+
+    businesses, search_ctx = _search_businesses(request)
+    context = {
+        **search_ctx,
+        'role': 'customer',
+        'upcoming': upcoming,
+        'recent_businesses': recent_businesses,
+        'recent_notifications': recent_notifications,
+    }
+    return render(request, 'core/home_customer.html', context)
+
+
+def _home_owner(request):
+    """Owner home: today's schedule + pending approvals + this week summary."""
+    business, err = _require_owner(request.user)
+    if err:
+        return err
+    if not business:
+        from django.contrib import messages as _messages
+        _messages.info(request, "You haven't registered a business yet.")
+        return redirect('core:owner_register_business')
+
+    today = timezone.localtime(timezone.now()).date()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    todays_bookings = (
+        Booking.objects.filter(
+            service__business=business,
+            date=today,
+            status__in=(Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED),
+        )
+        .select_related('customer', 'service')
+        .order_by('start_time')
+    )
+
+    pending_bookings = (
+        Booking.objects.filter(
+            service__business=business,
+            status=Booking.STATUS_PENDING,
+        )
+        .select_related('customer', 'service')
+        .order_by('date', 'start_time')[:10]
+    )
+
+    week_bookings_count = Booking.objects.filter(
+        service__business=business,
+        date__gte=week_start,
+        date__lte=week_end,
+        status__in=(Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED),
+    ).count()
+
+    week_revenue = Booking.objects.filter(
+        service__business=business,
+        date__gte=week_start,
+        date__lte=week_end,
+        status__in=(Booking.STATUS_CONFIRMED, Booking.STATUS_COMPLETED),
+    ).aggregate(total=Sum('service__price'))['total'] or 0
+
+    context = {
+        'role': 'owner',
+        'business': business,
+        'todays_bookings': todays_bookings,
+        'pending_bookings': pending_bookings,
+        'week_bookings_count': week_bookings_count,
+        'week_revenue': week_revenue,
+        'today': today,
+    }
+    return render(request, 'core/home_owner.html', context)
+
+
+def _home_admin(request):
+    """Admin home: platform totals + businesses awaiting verification."""
+    total_businesses = Business.objects.count()
+    total_bookings = Booking.objects.count()
+    verified_businesses = Business.objects.filter(is_verified=True).count()
+    total_revenue = Payment.objects.filter(
+        status__in=Payment.PAID_STATUSES
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    unverified = Business.objects.filter(is_verified=False).order_by('name')[:20]
+
+    context = {
+        'role': 'admin',
+        'total_businesses': total_businesses,
+        'total_bookings': total_bookings,
+        'verified_businesses': verified_businesses,
+        'total_revenue': total_revenue,
+        'unverified': unverified,
+    }
+    return render(request, 'core/home_admin.html', context)
 
 
 def business_detail(request, slug):
@@ -215,8 +374,9 @@ def booking_confirm(request, service_id, date, time):
         try:
             booking = create_booking(request.user, service, booking_date, time)
             create_sms_notifications(booking)
-            messages.success(request, "Booking created! Complete your payment below.")
-            return redirect('core:mpesa_payment', booking_id=booking.id)
+            messages.success(request, "Booking created! Complete your payment to confirm it.")
+            pay_url = reverse('core:pay_booking', args=[booking.id])
+            return redirect(f"{pay_url}?autopay=1")
         except ValidationError as e:
             messages.error(request, str(e.message))
             return redirect('core:booking_form', service_id=service_id)
@@ -234,55 +394,283 @@ def booking_confirm(request, service_id, date, time):
     return render(request, 'core/booking_confirm.html', context)
 
 
+# ---------------------------------------------------------------------------
+# Paystack payments
+#
+# Flow:
+#   1. pay_booking          - page with the Pay button
+#   2. paystack_initialize  - (AJAX) server starts the transaction, returns access_code
+#   3. Browser opens the Paystack popup with that access_code
+#   4. paystack_verify      - (AJAX) after the popup reports success, server re-checks
+#                             the transaction with Paystack before marking it paid
+#   5. paystack_webhook     - Paystack calls this itself, so payments are recorded even
+#                             if the customer closes the tab before step 4
+# ---------------------------------------------------------------------------
+
+PAYABLE_BOOKING_STATUSES = (Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED)
+PAYSTACK_TIMEOUT = 20  # seconds
+
+
+def _paystack_configured():
+    key = settings.PAYSTACK_SECRET_KEY or ''
+    return key.startswith(('sk_test_', 'sk_live_')) and 'REPLACE' not in key
+
+
+def _paystack_headers():
+    return {
+        'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
+        'Content-Type': 'application/json',
+    }
+
+
+def _to_subunit(amount):
+    """KES 500.00 -> 50000 (Paystack expects the smallest currency unit)."""
+    return int((Decimal(amount) * 100).to_integral_value())
+
+
+def _paystack_verify(reference):
+    """Ask Paystack for the real status of a transaction. Returns its data dict, or None."""
+    try:
+        res = requests.get(
+            f"{settings.PAYSTACK_BASE_URL}/transaction/verify/{reference}",
+            headers=_paystack_headers(),
+            timeout=PAYSTACK_TIMEOUT,
+        )
+        body = res.json()
+    except (requests.RequestException, ValueError):
+        logger.exception("Paystack verify failed for %s", reference)
+        return None
+    if not body.get('status'):
+        return None
+    return body.get('data') or {}
+
+
+def _settle_payment(payment_id, data):
+    """
+    Apply a Paystack transaction payload to our Payment record.
+    Safe to call repeatedly (webhook + verify can both arrive).
+    Returns 'paid', 'failed', 'pending' or 'mismatch'.
+    """
+    with transaction.atomic():
+        payment = Payment.objects.select_for_update().select_related('booking').get(pk=payment_id)
+
+        if payment.status == Payment.STATUS_PAID:
+            return 'paid'
+
+        tx_status = data.get('status')
+
+        if tx_status == 'success':
+            currency = str(data.get('currency', '')).upper()
+            if data.get('amount') != _to_subunit(payment.amount) or currency != settings.PAYSTACK_CURRENCY.upper():
+                # Money arrived but not the amount/currency we expected - never auto-confirm.
+                logger.error(
+                    "Paystack amount/currency mismatch for %s: got %s %s, expected %s %s",
+                    payment.transaction_ref, data.get('amount'), currency,
+                    _to_subunit(payment.amount), settings.PAYSTACK_CURRENCY,
+                )
+                return 'mismatch'
+
+            payment.status = Payment.STATUS_PAID
+            payment.channel = data.get('channel') or ''
+            payment.paid_at = timezone.now()
+            payment.save(update_fields=['status', 'channel', 'paid_at'])
+
+            booking = payment.booking
+            if booking.status == Booking.STATUS_PENDING:
+                booking.status = Booking.STATUS_CONFIRMED
+                booking.save(update_fields=['status'])
+            return 'paid'
+
+        if tx_status in ('failed', 'abandoned', 'reversed'):
+            payment.status = Payment.STATUS_DECLINED
+            payment.save(update_fields=['status'])
+            return 'failed'
+
+        return 'pending'
+
+
+def _can_pay(booking, payment):
+    if payment and payment.is_paid:
+        return False
+    return booking.status in PAYABLE_BOOKING_STATUSES
+
+
 @login_required
-def mpesa_payment(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id, customer=request.user)
+def pay_booking(request, booking_id):
+    booking = get_object_or_404(
+        Booking.objects.select_related('service__business'),
+        id=booking_id, customer=request.user,
+    )
+    payment = Payment.objects.filter(booking=booking).first()
 
     # Already paid?
-    if hasattr(booking, 'payment') and booking.payment.status == Payment.STATUS_SUCCESS:
+    if payment and payment.is_paid:
         return redirect('core:booking_detail', booking_id=booking.id)
 
-    form = MpesaForm()
-    processing = False
+    if not _can_pay(booking, payment):
+        messages.error(request, "This booking can no longer be paid for.")
+        return redirect('core:booking_detail', booking_id=booking.id)
 
-    if request.method == 'POST':
-        form = MpesaForm(request.POST)
-        if form.is_valid():
-            pin = form.cleaned_data['pin']
-            phone = form.cleaned_data['phone']
-
-            # Failure: PIN 0000
-            if pin == '0000':
-                status = Payment.STATUS_FAILED
-                ref = ''
-                messages.error(request, "M-Pesa payment failed. Please try again.")
-            else:
-                status = Payment.STATUS_SUCCESS
-                ref = f"SIM{uuid.uuid4().hex[:10].upper()}"
-                # Update booking to confirmed
-                booking.status = Booking.STATUS_CONFIRMED
-                booking.save()
-                messages.success(request, f"Payment successful! Ref: {ref} (SIMULATED)")
-
-            # Create or update payment record
-            Payment.objects.update_or_create(
-                booking=booking,
-                defaults={
-                    'amount': booking.service.price,
-                    'method': 'mpesa_simulated',
-                    'status': status,
-                    'transaction_ref': ref,
-                    'phone_number': phone,
-                },
-            )
-            return redirect('core:booking_detail', booking_id=booking.id)
-
+    email = request.user.email
+    config = {
+        'initUrl': reverse('core:paystack_initialize', args=[booking.id]),
+        'verifyUrl': reverse('core:paystack_verify', args=[booking.id]),
+        'detailUrl': reverse('core:booking_detail', args=[booking.id]),
+        # Open the popup straight away when we arrive from "Confirm Booking & Pay"
+        # (only possible if we already have an email to send to Paystack).
+        'autopay': request.GET.get('autopay') == '1' and bool(email),
+    }
     context = {
         'booking': booking,
-        'form': form,
-        'processing': processing,
+        'user_email': email,
+        'pay_config': config,
     }
-    return render(request, 'core/mpesa_payment.html', context)
+    return render(request, 'core/paystack_payment.html', context)
+
+
+@login_required
+@require_POST
+def paystack_initialize(request, booking_id):
+    """Create the Paystack transaction on the server and hand the access_code to the browser."""
+    booking = get_object_or_404(
+        Booking.objects.select_related('service__business'),
+        id=booking_id, customer=request.user,
+    )
+    detail_url = reverse('core:booking_detail', args=[booking.id])
+    payment = Payment.objects.filter(booking=booking).first()
+
+    if payment and payment.is_paid:
+        return JsonResponse({'already_paid': True, 'redirect': detail_url})
+
+    if booking.status not in PAYABLE_BOOKING_STATUSES:
+        return JsonResponse({'error': 'This booking can no longer be paid for.'}, status=409)
+
+    if not _paystack_configured():
+        return JsonResponse(
+            {'error': 'Paystack is not configured yet. Add your Paystack keys in settings.py.'},
+            status=503,
+        )
+
+    try:
+        body = json.loads(request.body or b'{}')
+    except ValueError:
+        body = {}
+    email = (body.get('email') or request.user.email or '').strip()
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({'error': 'Enter a valid email address.', 'field': 'email'}, status=400)
+
+    # If an earlier attempt exists, check whether it actually went through before starting a new one.
+    if payment and payment.method == 'paystack' and payment.transaction_ref:
+        previous = _paystack_verify(payment.transaction_ref)
+        if previous and _settle_payment(payment.id, previous) == 'paid':
+            return JsonResponse({'already_paid': True, 'redirect': detail_url})
+
+    amount = booking.service.price            # always taken from the database, never from the browser
+    reference = f"BM{booking.id}-{uuid.uuid4().hex[:12]}"
+
+    payload = {
+        'email': email,
+        'amount': _to_subunit(amount),
+        'currency': settings.PAYSTACK_CURRENCY,
+        'reference': reference,
+        'metadata': {
+            'booking_id': booking.id,
+            'custom_fields': [
+                {'display_name': 'Business', 'variable_name': 'business',
+                 'value': booking.service.business.name},
+                {'display_name': 'Service', 'variable_name': 'service',
+                 'value': booking.service.name},
+                {'display_name': 'Booking', 'variable_name': 'booking_id',
+                 'value': str(booking.id)},
+            ],
+        },
+    }
+
+    try:
+        res = requests.post(
+            f"{settings.PAYSTACK_BASE_URL}/transaction/initialize",
+            headers=_paystack_headers(),
+            json=payload,
+            timeout=PAYSTACK_TIMEOUT,
+        )
+        result = res.json()
+    except (requests.RequestException, ValueError):
+        logger.exception("Paystack initialize failed for booking %s", booking.id)
+        return JsonResponse(
+            {'error': 'Could not reach Paystack. Please try again in a moment.'}, status=502,
+        )
+
+    if not result.get('status'):
+        logger.error("Paystack initialize rejected for booking %s: %s", booking.id, result.get('message'))
+        return JsonResponse(
+            {'error': result.get('message') or 'Paystack could not start this payment.'}, status=502,
+        )
+
+    Payment.objects.update_or_create(
+        booking=booking,
+        defaults={
+            'amount': amount,
+            'method': 'paystack',
+            'status': Payment.STATUS_PENDING,
+            'transaction_ref': reference,
+            'channel': '',
+            'paid_at': None,
+        },
+    )
+    return JsonResponse({
+        'access_code': result['data']['access_code'],
+        'reference': reference,
+    })
+
+
+@login_required
+@require_POST
+def paystack_verify(request, booking_id):
+    """Called by the browser after the popup reports success. Paystack, not the browser, decides."""
+    booking = get_object_or_404(Booking, id=booking_id, customer=request.user)
+    detail_url = reverse('core:booking_detail', args=[booking.id])
+    payment = Payment.objects.filter(booking=booking, method='paystack').first()
+    if not payment or not payment.transaction_ref:
+        return JsonResponse({'status': 'error', 'error': 'No payment was started for this booking.'}, status=404)
+
+    data = _paystack_verify(payment.transaction_ref)
+    if data is None:
+        return JsonResponse(
+            {'status': 'error', 'error': 'Could not confirm the payment with Paystack yet.'}, status=502,
+        )
+
+    result = _settle_payment(payment.id, data)
+    return JsonResponse({'status': result, 'redirect': detail_url})
+
+
+@csrf_exempt
+@require_POST
+def paystack_webhook(request):
+    """Server-to-server notification from Paystack. Authenticated by its HMAC signature."""
+    signature = request.headers.get('x-paystack-signature', '')
+    expected = hmac.new(
+        settings.PAYSTACK_SECRET_KEY.encode(), request.body, hashlib.sha512,
+    ).hexdigest()
+    if not signature or not hmac.compare_digest(signature, expected):
+        return HttpResponse(status=401)
+
+    try:
+        event = json.loads(request.body)
+    except ValueError:
+        return HttpResponse(status=400)
+
+    if event.get('event') == 'charge.success':
+        data = event.get('data') or {}
+        reference = data.get('reference', '')
+        payment = Payment.objects.filter(transaction_ref=reference).first()
+        if payment:
+            _settle_payment(payment.id, data)
+        else:
+            logger.warning("Paystack webhook for unknown reference %s", reference)
+
+    return HttpResponse(status=200)
 
 
 @login_required
@@ -295,6 +683,7 @@ def booking_detail(request, booking_id):
     context = {
         'booking': booking,
         'payment': payment,
+        'can_pay': _can_pay(booking, payment),
         'sms_notifications': sms_notifications,
         'review': review,
     }
@@ -917,7 +1306,7 @@ def platform_totals(request):
     total_businesses = Business.objects.count()
     total_bookings = Booking.objects.count()
     total_revenue = Payment.objects.filter(
-        status=Payment.STATUS_SUCCESS
+        status__in=Payment.PAID_STATUSES
     ).aggregate(total=Sum('amount'))['total'] or 0
     verified_businesses = Business.objects.filter(is_verified=True).count()
 

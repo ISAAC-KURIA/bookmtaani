@@ -42,22 +42,6 @@ body {
 }
 
 /* =====================================================
-   Demo banner
-   ===================================================== */
-.demo-banner {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--color-amber-bg);
-  color: var(--color-amber-text);
-  text-align: center;
-  padding: 0.4rem 1rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-bottom: 1px solid #F59E0B;
-}
-
-/* =====================================================
    Navigation
    ===================================================== */
 .navbar {
@@ -65,7 +49,8 @@ body {
   color: #fff;
   padding: 0 1rem;
   position: sticky;
-  top: 2rem;
+  top: 0;
+  margin: 0;
   z-index: 90;
 }
 
@@ -304,9 +289,39 @@ textarea:focus {
    Messages / Alerts
    ===================================================== */
 .messages-container {
-  max-width: 1200px;
-  margin: 0.75rem auto 0;
-  padding: 0 1rem;
+  position: fixed;
+  top: 4.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: min(92vw, 480px);
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.messages-container .alert {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+
+.messages-container .alert.is-leaving {
+  opacity: 0;
+}
+
+.alert-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.1rem;
 }
 
 .alert {
@@ -507,9 +522,9 @@ textarea:focus {
 }
 
 /* =====================================================
-   M-Pesa payment card
+   Payment page (Paystack)
    ===================================================== */
-.mpesa-card {
+.pay-card {
   max-width: 420px;
   margin: 2rem auto;
   background: var(--color-bg);
@@ -519,32 +534,92 @@ textarea:focus {
   text-align: center;
 }
 
-.mpesa-logo {
-  font-size: 1.5rem;
+.pay-brand {
+  font-size: 1.4rem;
   font-weight: 800;
   color: var(--color-green);
   letter-spacing: -0.02em;
   margin-bottom: 0.5rem;
 }
 
-.mpesa-label {
-  font-size: 0.8rem;
-  color: var(--color-error);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  margin-bottom: 1rem;
+.pay-sub {
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+  margin-bottom: 1.25rem;
+}
+
+.pay-card .form-error {
   display: block;
 }
 
-.phone-display {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
+.input-error {
+  border-color: var(--color-error) !important;
+}
+
+/* =====================================================
+   Toasts (dismissible, centered at the top)
+   ===================================================== */
+.toast-stack {
+  position: fixed;
+  top: 4.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(92vw, 440px);
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
   border-radius: 6px;
-  padding: 0.6rem 1rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  margin-bottom: 1.25rem;
-  color: var(--color-text);
+  border: 1px solid;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.toast .toast-msg {
+  flex: 1;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.1rem;
+}
+
+.toast-success {
+  background: #DCFCE7;
+  color: #166534;
+  border-color: #86EFAC;
+}
+
+.toast-error {
+  background: #FEE2E2;
+  color: var(--color-error);
+  border-color: #FCA5A5;
+}
+
+.toast-info {
+  background: #DBEAFE;
+  color: #1E3A8A;
+  border-color: #93C5FD;
+}
+
+.toast-warning {
+  background: var(--color-amber-bg);
+  color: var(--color-amber-text);
+  border-color: #FCD34D;
 }
 
 /* =====================================================
@@ -563,7 +638,7 @@ textarea:focus {
   border-radius: 8px;
   padding: 1rem 0;
   position: sticky;
-  top: 7rem;
+  top: 5rem;
 }
 
 .owner-sidebar nav a {
@@ -834,4 +909,298 @@ textarea:focus {
   .search-bar form {
     flex-direction: column;
   }
+}
+
+/* =====================================================
+   Role-aware navigation extras
+   ===================================================== */
+.nav-role-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.35rem;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.nav-role-pill-owner {
+  background: var(--color-green);
+}
+
+.nav-role-pill-customer {
+  background: rgba(255,255,255,0.15);
+}
+
+.nav-signout {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.nav-role-label {
+  font-weight: 700 !important;
+  color: #fff !important;
+}
+
+.nav-cta {
+  background: var(--color-green) !important;
+  color: #fff !important;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem !important;
+  font-weight: 600;
+}
+.nav-cta:hover {
+  background: var(--color-green-hover) !important;
+}
+
+/* =====================================================
+   Role home pages — shared hero section
+   ===================================================== */
+.home-hero {
+  background: var(--color-brand);
+  color: #fff;
+  padding: 2rem 1rem 1.75rem;
+}
+
+.home-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.home-hero h1 {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 0.4rem;
+}
+
+.home-hero p {
+  font-size: 1rem;
+  color: #BFDBFE;
+  margin-bottom: 1rem;
+}
+
+.home-hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Owner home hero — green accent */
+.home-hero-owner {
+  background: var(--color-green);
+}
+.home-hero-owner p {
+  color: #BBF7D0;
+}
+
+/* Admin home hero — dark neutral */
+.home-hero-admin {
+  background: #1F2937;
+}
+.home-hero-admin p {
+  color: #D1D5DB;
+}
+
+/* =====================================================
+   "How it works" steps (anonymous home)
+   ===================================================== */
+.how-it-works {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.how-step {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.how-step-icon {
+  width: 3rem;
+  height: 3rem;
+  background: var(--color-brand);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin: 0 auto 0.75rem;
+}
+
+.how-step h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.how-step p {
+  font-size: 0.85rem;
+  color: var(--color-secondary);
+}
+
+/* =====================================================
+   Owner home — pending approval list
+   ===================================================== */
+.approval-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.approval-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  flex-wrap: wrap;
+}
+
+.approval-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.approval-item-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.approval-item-meta {
+  font-size: 0.82rem;
+  color: var(--color-secondary);
+}
+
+.approval-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* =====================================================
+   Customer home — upcoming booking cards
+   ===================================================== */
+.upcoming-booking-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-brand);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.upcoming-booking-card.status-confirmed {
+  border-left-color: var(--color-green);
+}
+
+.upcoming-booking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.upcoming-booking-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.upcoming-booking-meta {
+  font-size: 0.82rem;
+  color: var(--color-secondary);
+}
+
+/* =====================================================
+   Admin home — verification list
+   ===================================================== */
+.verify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.verify-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  flex-wrap: wrap;
+}
+
+.verify-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.verify-item-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.verify-item-meta {
+  font-size: 0.82rem;
+  color: var(--color-secondary);
+}
+
+/* =====================================================
+   Home page two-column layout (owner / admin)
+   ===================================================== */
+.home-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .home-two-col {
+    grid-template-columns: 1fr;
+  }
+  .home-hero h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* =====================================================
+   SMS notification snippet (customer home)
+   ===================================================== */
+.sms-snippet {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.83rem;
+  color: var(--color-secondary);
+  line-height: 1.4;
+}
+
+.sms-snippet strong {
+  color: var(--color-text);
+  display: block;
+  font-size: 0.78rem;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
 }

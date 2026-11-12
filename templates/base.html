@@ -6,16 +6,8 @@
   <title>{% block title %}BookMtaani{% endblock %} — BookMtaani</title>
   <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
-  {% block extra_head %}{% endblock %}
 </head>
 <body>
-
-  <!-- Demo banner -->
-  <div class="demo-banner" role="banner">
-    <i class="fas fa-flask"></i>
-    Demo mode: simulated data &nbsp;|&nbsp; M-Pesa, SMS and AI insights are SIMULATED &nbsp;|&nbsp; For local demo only
-  </div>
-
   <!-- Navigation -->
   <nav class="navbar" aria-label="Main navigation">
     <div class="navbar-inner">
@@ -26,24 +18,43 @@
         <i class="fas fa-bars"></i>
       </button>
       <ul class="navbar-nav" id="main-nav">
-        <li><a href="{% url 'core:home' %}"><i class="fas fa-search"></i> Find Services</a></li>
         {% if user.is_authenticated %}
-          {% if user.profile.is_owner %}
+          {% if user.is_staff %}
+            {# Admin nav #}
+            <li><a href="{% url 'core:home' %}"><i class="fas fa-tachometer-alt"></i> Platform Home</a></li>
+            <li><a href="{% url 'core:platform_totals' %}"><i class="fas fa-chart-pie"></i> Totals</a></li>
+            <li><a href="{% url 'admin:index' %}" target="_blank"><i class="fas fa-cog"></i> Django Admin</a></li>
+          {% elif user.profile.is_owner %}
+            {# Owner nav #}
+            {% with biz=user.businesses.first %}
+            <li>
+              <a href="{% url 'core:home' %}" class="nav-role-label">
+                <i class="fas fa-store"></i>
+                {% if biz %}{{ biz.name|truncatechars:22 }}{% else %}Owner{% endif %}
+              </a>
+            </li>
+            {% endwith %}
             <li><a href="{% url 'core:owner_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="{% url 'core:owner_bookings' %}"><i class="fas fa-calendar-alt"></i> Bookings</a></li>
             <li><a href="{% url 'core:owner_analytics' %}"><i class="fas fa-chart-bar"></i> Analytics</a></li>
           {% else %}
+            {# Customer nav #}
+            <li><a href="{% url 'core:home' %}"><i class="fas fa-search"></i> Find Services</a></li>
             <li><a href="{% url 'core:my_bookings' %}"><i class="fas fa-calendar-alt"></i> My Bookings</a></li>
             <li><a href="{% url 'core:notifications' %}"><i class="fas fa-bell"></i> Notifications</a></li>
           {% endif %}
-          {% if user.is_staff %}
-            <li><a href="{% url 'core:platform_totals' %}"><i class="fas fa-chart-pie"></i> Platform</a></li>
-            <li><a href="{% url 'admin:index' %}" target="_blank"><i class="fas fa-cog"></i> Admin</a></li>
-          {% endif %}
-          <li><a href="{% url 'core:logout' %}"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
+          <li>
+            <a href="{% url 'core:logout' %}" class="nav-signout">
+              <i class="fas fa-sign-out-alt"></i>
+              {{ user.username }}
+              {% if user.is_staff %}<span class="nav-role-pill">Admin</span>{% elif user.profile.is_owner %}<span class="nav-role-pill nav-role-pill-owner">Owner</span>{% else %}<span class="nav-role-pill nav-role-pill-customer">Customer</span>{% endif %}
+            </a>
+          </li>
         {% else %}
+          {# Anonymous nav #}
+          <li><a href="{% url 'core:home' %}"><i class="fas fa-search"></i> Find Services</a></li>
           <li><a href="{% url 'core:login' %}"><i class="fas fa-sign-in-alt"></i> Sign In</a></li>
-          <li><a href="{% url 'core:register' %}"><i class="fas fa-user-plus"></i> Register</a></li>
+          <li><a href="{% url 'core:register' %}" class="nav-cta"><i class="fas fa-user-plus"></i> Register</a></li>
         {% endif %}
       </ul>
     </div>
@@ -55,7 +66,8 @@
       {% for message in messages %}
         <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
           <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
-          {{ message }}
+          <span>{{ message }}</span>
+          <button type="button" class="alert-close" aria-label="Dismiss">&times;</button>
         </div>
       {% endfor %}
     </div>
@@ -69,9 +81,25 @@
   <!-- Footer -->
   <footer class="footer">
     <p>BookMtaani &mdash; Digital booking for small businesses in Kenya &nbsp;&bull;&nbsp;
-    AI Hackathon, Kisii National Polytechnic, Nov 2026 &nbsp;&bull;&nbsp;
-    <strong>DEMO ONLY &mdash; not for public deployment</strong></p>
+    AI Hackathon, Kisii National Polytechnic, Nov 2026</p>
   </footer>
+
+  <script>
+  // Flash messages disappear on their own after a few seconds (or when dismissed)
+  (function () {
+    var alerts = document.querySelectorAll('.messages-container .alert');
+    alerts.forEach(function (el) {
+      var timer = setTimeout(dismiss, 4500);
+      function dismiss() {
+        clearTimeout(timer);
+        el.classList.add('is-leaving');
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+      }
+      var btn = el.querySelector('.alert-close');
+      if (btn) btn.addEventListener('click', dismiss);
+    });
+  })();
+  </script>
 
   {% block extra_js %}{% endblock %}
 </body>

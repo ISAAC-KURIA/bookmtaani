@@ -63,8 +63,9 @@ class BookingAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ['booking', 'amount', 'method', 'status', 'transaction_ref', 'created_at']
-    list_filter = ['status', 'method']
+    list_display = ['booking', 'amount', 'method', 'channel', 'status', 'transaction_ref', 'paid_at', 'created_at']
+    list_filter = ['status', 'method', 'channel']
+    search_fields = ['transaction_ref', 'booking__customer__username']
 
 
 @admin.register(SMSNotification)

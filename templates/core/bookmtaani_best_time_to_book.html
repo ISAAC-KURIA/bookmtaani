@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BookMtaani.ke | Best time to book</title>
+<!-- Font Awesome Free, served locally. In Django use: {% static 'vendor/fontawesome/css/all.min.css' %} -->
+<link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+<style>
+  :root { --blue:#1D4ED8; --blue-dark:#1E40AF; --green:#15803D; --green-dark:#166534; --bg:#F3F4F6; --line:#E5E7EB; --text:#111827; --muted:#4B5563; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui, Calibri, Arial, sans-serif; background:var(--bg); color:var(--text); padding-bottom:40px; }
+  header { background:var(--blue); color:#fff; text-align:center; padding:24px 16px 32px; }
+  header h1 { margin:0; font-size:26px; }
+  header p { margin:6px 0 0; opacity:.9; font-size:15px; }
+  main { max-width:560px; margin:-16px auto 0; padding:0 14px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:14px; }
+  .step { display:flex; align-items:center; gap:8px; font-weight:700; color:var(--blue); margin-bottom:10px; font-size:17px; }
+  .step span { background:var(--blue); color:#fff; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font-size:14px; }
+  .row { display:flex; gap:8px; }
+  input { width:100%; padding:13px 14px; font-size:16px; border:2px solid var(--line); border-radius:10px; background:#fff; }
+  input:focus { outline:none; border-color:var(--blue); }
+  .btn { padding:0 20px; min-height:48px; border:0; border-radius:10px; background:var(--blue); color:#fff; font-size:16px; font-weight:600; cursor:pointer; }
+  .btn.full { width:100%; margin-top:12px; font-size:18px; background:var(--green); }
+  .btn:hover { background:var(--blue-dark); } .btn.full:hover { background:var(--green-dark); }
+  .btn:focus-visible, .chip:focus-visible, .quick button:focus-visible, summary:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+  .demo { background:#FEF3C7; color:#B45309; text-align:center; padding:8px 12px; font-size:14px; font-weight:600; }
+  .chip small i, .legend i, .deal i, .step i, summary i, .verdict i, .confirm i, #tiers i { margin-right:4px; }
+  .bar { position:relative; }
+  ul { list-style:none; margin:6px 0 0; padding:0; background:#fff; border:1px solid var(--line); border-radius:10px; max-height:280px; overflow-y:auto;
+       position:absolute; left:0; right:0; z-index:5; display:none; }
+  li { padding:12px 14px; cursor:pointer; display:flex; justify-content:space-between; gap:10px; }
+  li small { color:var(--muted); }
+  li.active, li:hover { background:#EFF6FF; }
+  mark { background:none; color:var(--blue); font-weight:700; }
+  .tag { font-size:12px; padding:2px 8px; border-radius:99px; background:#DCFCE7; color:var(--green-dark); white-space:nowrap; }
+  .biz small { color:var(--muted); }
+  .legend { display:flex; gap:14px; font-size:13px; color:var(--muted); margin:10px 0 0; flex-wrap:wrap; }
+  .chips { display:grid; grid-template-columns:repeat(auto-fill, minmax(84px, 1fr)); gap:8px; margin-top:10px; }
+  .chip { padding:10px 4px; border:2px solid var(--line); border-radius:10px; background:#fff; font-size:16px; font-weight:600; cursor:pointer; text-align:center; }
+  .chip small { display:block; font-size:12px; font-weight:400; }
+  .chip.Low { background:#DCFCE7; border-color:#86EFAC; }
+  .chip.Normal { background:#FEF3C7; border-color:#FCD34D; }
+  .chip.High { background:#FEE2E2; border-color:#FCA5A5; }
+  .chip.sel { outline:3px solid var(--blue); outline-offset:1px; }
+  .verdict { padding:14px; border-radius:12px; font-size:17px; font-weight:600; background:#F3F4F6; color:var(--text); }
+  .v-Low { background:#DCFCE7; color:var(--green-dark); } .v-Normal { background:#FEF3C7; color:#B45309; } .v-High { background:#FEE2E2; color:#B91C1C; }
+  .note { font-size:13px; color:var(--muted); margin-top:8px; }
+  .deal { margin-top:10px; padding:10px 12px; border-radius:10px; background:#DCFCE7; color:var(--green-dark); font-weight:600; }
+  .deal.plain { background:#F3F4F6; color:var(--muted); font-weight:400; }
+  .msg { margin-top:10px; padding:10px 12px; border-radius:10px; background:#FEE2E2; color:#B91C1C; display:none; }
+  .confirm { margin-top:12px; padding:14px; border-radius:12px; background:#DCFCE7; border:2px solid #86EFAC; display:none; line-height:1.5; }
+  details summary { cursor:pointer; font-weight:700; color:var(--blue); font-size:17px; }
+  .chat { margin-top:10px; border:1px solid var(--line); border-radius:10px; padding:8px; max-height:170px; overflow-y:auto; background:#fff; }
+  .bubble { margin:5px 0; padding:8px 10px; border-radius:10px; font-size:14px; }
+  .me { background:#EFF6FF; text-align:right; } .bot { background:#F3F4F6; }
+  .quick { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .quick button { border:1px solid var(--line); background:#fff; border-radius:99px; padding:6px 12px; font-size:13px; cursor:pointer; color:var(--blue); }
+  #flow { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>BookMtaani.ke</h1>
+  <p>Find a business. Know the best time to book.</p>
+</header>
+<div class="demo"><i class="fa-solid fa-flask"></i> Demo mode: simulated data</div>
+
+<main>
+  <div class="card">
+    <div class="step"><span>1</span> Find a business</div>
+    <div class="bar">
+      <div class="row">
+        <input id="q" type="search" placeholder="Type a name or service, e.g. salon" autocomplete="off">
+        <button class="btn" id="go">Search</button>
+      </div>
+      <ul id="list"></ul>
+    </div>
+    <div id="notFound" class="msg"></div>
+  </div>
+
+  <div id="flow">
+    <div class="card biz" id="bizInfo"></div>
+
+    <div class="card">
+      <div class="step"><span>2</span> Pick a day</div>
+      <input type="date" id="bdate">
+      <div class="note" id="dayLabel"></div>
+    </div>
+
+    <div class="card">
+      <div class="step"><span>3</span> Pick a time</div>
+      <div class="legend" id="legend"><span><i class="fa-solid fa-circle-check" style="color:var(--green)"></i>Quiet</span><span><i class="fa-solid fa-clock" style="color:#B45309"></i>Normal</span><span><i class="fa-solid fa-triangle-exclamation" style="color:#B91C1C"></i>Busy</span></div>
+      <div class="chips" id="chips"></div>
+      <div class="note" id="basis"></div>
+    </div>
+
+    <div class="card" aria-live="polite">
+      <div class="step"><span><i class="fa-solid fa-lightbulb"></i></span> Is it a good time? <small style="font-weight:400;color:var(--muted)">(simulated insight)</small></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="deal" id="deal"></div>
+      <div class="note" id="tiers"></div>
+      <button class="btn full" id="bookBtn">Book now</button>
+      <div class="msg" id="msg"></div>
+      <div class="confirm" id="confirm"></div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary><i class="fa-solid fa-comments"></i> Ask the helper</summary>
+        <div class="chat" id="chatBox"><div class="bubble bot">Hi! Ask me about a time, or tap a question below.</div></div>
+        <div class="quick" id="quick">
+          <button type="button" data-q="Is 2pm okay?">Is 2pm okay?</button>
+          <button type="button" data-q="When is it quiet?">When is it quiet?</button>
+          <button type="button" data-q="When is it busy?">When is it busy?</button>
+          <button type="button" data-q="Do I get a discount?">Do I get a discount?</button>
+        </div>
+        <div class="row" style="margin-top:8px"><input id="aiInput" placeholder="Type your question"><button class="btn" id="aiAsk">Ask</button></div>
+      </details>
+    </div>
+  </div>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const SHORT = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const LONG = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const WORD = { Low:"Quiet", Normal:"Normal", High:"Busy" };
+  const ICON = { Low:"fa-circle-check", Normal:"fa-clock", High:"fa-triangle-exclamation" };
+
+  const ITEMS = [
+    { text:"Blue Wave Car Wash", tag:"Car Wash · Kisii", price:"400", open:7, close:19, days:"Mon-Sun" },
+    { text:"Cleanwise Laundry", tag:"Laundry · Nyamache", price:"300", open:8, close:18, days:"Mon-Sat" },
+    { text:"Crown Cuts Kinyozi", tag:"Kinyozi · Kisii Town", price:"300", open:8, close:19, days:"Mon-Sun" },
+    { text:"FitLife Gym & Trainers", tag:"Fitness · Milimani", price:"500", open:6, close:20, days:"Mon-Sat" },
+    { text:"Glam Nails Studio", tag:"Nails · Kisii Town", price:"800", open:9, close:18, days:"Mon-Sat" },
+    { text:"Glow & Grace Beauty Spa", tag:"Spa · Milimani", price:"1500", open:9, close:19, days:"Mon-Sat" },
+    { text:"Mama Njeri Braids", tag:"Salon · Kisii Town", price:"500", open:8, close:18, days:"Mon-Sat" },
+    { text:"Mtaani Fade Masters", tag:"Kinyozi · Nyanchwa", price:"250", open:8, close:19, days:"Mon-Sun" },
+    { text:"Royal Touch Salon", tag:"Salon · Milimani", price:"600", open:8, close:18, days:"Mon-Sat" },
+    { text:"Shine Pro Car Care", tag:"Car Wash · Daraja Mbili", price:"400", open:7, close:19, days:"Mon-Sun" }
+  ].sort((a,b)=>a.text.localeCompare(b.text));
+
+  // Safe storage: works even when the browser blocks localStorage
+  const store = {
+    mem:{},
+    get(k, d){ try{ const v=localStorage.getItem(k); if(v) return JSON.parse(v); }catch(e){} return k in this.mem ? this.mem[k] : d; },
+    set(k, v){ this.mem[k]=v; try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  // Dates
+  const pad = n => String(n).padStart(2,'0');
+  function todayStr(){ const n=new Date(); return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`; }
+  function parseDate(s){ if(!s) return new Date(); const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+  const weekday = d => (d.getDay()+6)%7;
+  function fmtDay(s){ const d=parseDate(s); return `${LONG[weekday(d)]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+  function isOpen(b, wd){
+    const [a,z] = b.days.split('-').map(x=>SHORT.indexOf(x));
+    return a<=z ? (wd>=a && wd<=z) : (wd>=a || wd<=z);
+  }
+
+  // ===== Simulated insight (rule-based): estimates when each business is busy or quiet =====
+  function hash(s){ let h=2166136261; for(const c of s){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+  function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  const SAMPLE = {};   // sample past bookings (replace with real data later)
+  ITEMS.forEach(b=>{
+    const r = rng(hash(b.text)), out = [];
+    while(out.length<60){
+      const wd = Math.floor(r()*7); if(!isOpen(b,wd)) continue;
+      const hour = b.open + Math.floor(r()*(b.close-b.open));
+      const w = (wd>=4?1.4:1) * (((hour>=12&&hour<=14)||hour>=17)?1.3:1);
+      if(r() < w/1.82) out.push({wd, hour});
+    }
+    SAMPLE[b.text] = out;
+  });
+  let REAL = store.get('bm_real', {});
+  let VISITS = store.get('bm_visits', {});
+  let CURRENT = null, selectedTime = '';
+
+  function aiPredict(b, dateStr, timeStr){
+    const date = parseDate(dateStr), wd = weekday(date), now = new Date();
+    const real = REAL[b.text] || [], sample = SAMPLE[b.text] || [], hist = sample.concat(real);
+    const out = { slots:[], chosen:null, summary:"", closed:false, quiet:[], busiest:[],
+      basis:`Simulated insight (rule-based): estimated from ${sample.length} sample bookings and ${real.length} demo bookings.` };
+    if(!isOpen(b,wd)){ out.closed=true; out.summary=`Closed on ${LONG[wd]}s. Open ${b.days}.`; return out; }
+
+    const hours=[]; for(let h=b.open; h<b.close; h++) hours.push(h);
+    const cnt={}; hours.forEach(h=>cnt[h]=0);
+    hist.forEach(x=>{ if(x.wd===wd && cnt[x.hour]!==undefined) cnt[x.hour]++; });
+    const smooth = h => .5*cnt[h] + .25*(cnt[h-1]||0) + .25*(cnt[h+1]||0);
+    const prior = h => (wd>=4?1.4:1) * (h<10?.8 : h<12?1 : h<14?1.1 : h<17?1 : 1.3);
+    const meanL = hours.reduce((s,h)=>s+smooth(h),0)/hours.length || 1;
+    const meanP = hours.reduce((s,h)=>s+prior(h),0)/hours.length;
+    const trust = hist.length/(hist.length+8);
+
+    hours.forEach(h=>{
+      const booked = real.filter(x=>x.date===dateStr && x.hour===h).length;
+      const ratio = trust*smooth(h)/meanL + (1-trust)*prior(h)/meanP + 0.35*booked;
+      const level = ratio>=1.3 ? "High" : ratio<=0.7 ? "Low" : "Normal";
+      const past = dateStr===todayStr() && h<now.getHours();
+      if(!past) out.slots.push({hour:`${pad(h)}:00`, h, ratio, level});
+    });
+    if(!out.slots.length){ out.summary="No times left today. Pick another day."; return out; }
+
+    const sorted = out.slots.slice().sort((a,b)=>a.ratio-b.ratio);
+    out.quiet = sorted.filter(s=>s.level!=="High").slice(0,3).map(s=>s.hour);
+    out.busiest = sorted.slice(-3).reverse().filter(s=>s.level!=="Low").map(s=>s.hour);
+
+    if(!timeStr){
+      out.summary = "Tap a time above to check it." + (out.quiet.length ? ` Quiet times: ${out.quiet.join(', ')}.` : '');
+      return out;
+    }
+    const hh = parseInt(timeStr.split(':')[0],10);
+    const c = out.slots.find(s=>s.h===hh);
+    if(!c){
+      out.summary = (hh<b.open||hh>=b.close) ? `Closed at ${pad(hh)}:00. Open ${b.open}:00 to ${b.close}:00.` : `${pad(hh)}:00 has already passed today.`;
+      return out;
+    }
+    out.chosen = c;
+    const alt = out.quiet.length ? ` Try ${out.quiet.join(', ')}.` : '';
+    out.summary = c.level==="Low" ? `Good time! It should be quiet at ${c.hour}.`
+      : c.level==="High" ? `Very busy at ${c.hour}. You may wait a long time.${alt}`
+      : `Okay time. A normal number of people at ${c.hour}.${alt}`;
+    return out;
+  }
+
+  // Loyalty levels: change the numbers here to change the rules
+  const TIERS = [ {name:"Platinum", min:20, pct:15}, {name:"Gold", min:10, pct:10}, {name:"Silver", min:5, pct:5} ];
+  function tierText(){
+    const a = TIERS.slice().reverse();   // Silver, Gold, Platinum
+    return a.map((t,i)=>`${t.name} (${a[i+1] ? t.min+'-'+(a[i+1].min-1) : t.min+'+'} visits): ${t.pct}% off`).join(' · ');
+  }
+  function aiLoyalty(b){
+    const visits = VISITS[b.text]||0;
+    const t = TIERS.find(x=>visits>=x.min);                       // highest level reached
+    const tier = t ? t.name : null, pct = t ? t.pct : 0;
+    const price = parseInt(b.price), pay = pct ? Math.round(price*(100-pct)/100) : price;
+    const n = TIERS.slice().reverse().find(x=>visits<x.min);      // next level up
+    const next = n ? `Visit ${n.min-visits} more time(s) to reach ${n.name} (${n.pct}% off).` : 'You have our best discount!';
+    return {visits, tier, pct, pay, price, next};
+  }
+
+  // ===== Search =====
+  const input = $('q'), list = $('list');
+  let shown=[], active=-1;
+  function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function render(){
+    const term = input.value.trim().toLowerCase();
+    list.innerHTML=''; active=-1;
+    if(!term){ list.style.display='none'; return; }
+    const starts = ITEMS.filter(i=>i.text.toLowerCase().startsWith(term));
+    const contains = ITEMS.filter(i=>!i.text.toLowerCase().startsWith(term) && (i.text.toLowerCase().includes(term)||i.tag.toLowerCase().includes(term)));
+    shown = starts.concat(contains).slice(0,8);
+    if(!shown.length) list.innerHTML='<li><small>No matches</small></li>';
+    else shown.forEach((item,idx)=>{
+      const li=document.createElement('li');
+      const at=item.text.toLowerCase().indexOf(term);
+      const label=at<0?esc(item.text):esc(item.text.slice(0,at))+'<mark>'+esc(item.text.slice(at,at+term.length))+'</mark>'+esc(item.text.slice(at+term.length));
+      li.innerHTML=`<span>${label}</span><span class="tag">${esc(item.tag)}</span>`;
+      li.addEventListener('mousedown',e=>{e.preventDefault(); selectBusiness(shown[idx]);});
+      list.appendChild(li);
+    });
+    list.style.display='block';
+  }
+
+  function selectBusiness(b){
+    CURRENT=b; selectedTime=''; input.value=b.text;
+    list.style.display='none'; $('notFound').style.display='none'; $('confirm').style.display='none'; $('msg').style.display='none';
+    $('flow').style.display='block';
+    refresh(true);
+  }
+
+  function doSearch(){
+    const term = input.value.trim().toLowerCase();
+    list.style.display='none';
+    if(!term) return;
+    const b = ITEMS.find(i=>i.text.toLowerCase()===term) || ITEMS.find(i=>i.text.toLowerCase().startsWith(term))
+           || ITEMS.find(i=>i.text.toLowerCase().includes(term)||i.tag.toLowerCase().includes(term));
+    if(b) return selectBusiness(b);
+    CURRENT=null; $('flow').style.display='none';
+    $('notFound').style.display='block';
+    $('notFound').textContent=`No business found for "${input.value.trim()}". Try another name or service.`;
+  }
+
+  // ===== Screen =====
+  function refresh(scroll){
+    const b = CURRENT; if(!b) return;
+    const date = $('bdate').value || todayStr();
+    $('bizInfo').innerHTML = `<b style="font-size:19px">${esc(b.text)}</b><br><small>${esc(b.tag)}<br>Price: Ksh ${esc(b.price)} · Open ${esc(b.days)}, ${b.open}:00 to ${b.close}:00</small>`;
+    $('dayLabel').textContent = fmtDay(date);
+
+    const p = aiPredict(b, date, selectedTime), loyal = aiLoyalty(b);
+    $('chips').innerHTML = p.slots.map(s=>`<button type="button" class="chip ${s.level}${s.hour===selectedTime?' sel':''}" data-time="${s.hour}">${s.hour}<small><i class="fa-solid ${ICON[s.level]}"></i>${WORD[s.level]}</small></button>`).join('');
+    $('legend').style.display = p.slots.length ? 'flex' : 'none';
+    $('basis').textContent = p.closed ? '' : p.basis;
+    $('verdict').className = 'verdict' + (p.chosen ? ' v-'+p.chosen.level : '');
+    $('verdict').innerHTML = (p.chosen ? `<i class="fa-solid ${ICON[p.chosen.level]}"></i>` : '<i class="fa-solid fa-hand-pointer"></i>') + esc(p.summary);
+    $('deal').className = 'deal' + (loyal.pct ? '' : ' plain');
+    $('deal').innerHTML = '<i class="fa-solid fa-tag"></i>' + esc(loyal.pct
+      ? `You get ${loyal.pct}% off (${loyal.tier})! Pay Ksh ${loyal.pay} instead of Ksh ${loyal.price}.`
+      : `You have visited ${loyal.visits} time(s). ${loyal.next}`);
+    $('tiers').innerHTML = '<i class="fa-solid fa-star"></i>' + esc(tierText());
+    if(scroll) $('flow').scrollIntoView({behavior:'smooth'});
+  }
+
+  function book(){
+    const b = CURRENT; if(!b) return;
+    const d = $('bdate').value || todayStr(), msg = $('msg'), box = $('confirm');
+    msg.style.display = 'none'; box.style.display = 'none';
+    if(!selectedTime){ msg.textContent='Please tap a time first.'; msg.style.display='block'; return; }
+    const p = aiPredict(b, d, selectedTime);      // check BEFORE saving this booking
+    if(!p.chosen){ msg.textContent=p.summary; msg.style.display='block'; return; }
+    const loyal = aiLoyalty(b);
+    REAL[b.text] = (REAL[b.text]||[]).concat({wd:weekday(parseDate(d)), hour:p.chosen.h, date:d});
+    VISITS[b.text] = loyal.visits + 1;
+    store.set('bm_real', REAL); store.set('bm_visits', VISITS);
+    box.innerHTML = `<b><i class="fa-solid fa-circle-check"></i> Booked! (demo)</b><br>${esc(b.text)}<br>${esc(fmtDay(d))} at ${selectedTime}<br>`
+      + `Pay: <b>Ksh ${loyal.pay}</b>${loyal.pct ? ` (${loyal.pct}% off)` : ''}<br>${esc(p.summary)}<br>Your visits here: ${loyal.visits+1}`;
+    box.style.display = 'block';
+    refresh(false);
+  }
+
+  // ===== Helper chat =====
+  function askedTime(q){
+    let m = q.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
+    if(m){ let h=(+m[1])%12; if(m[3]==='pm') h+=12; return `${pad(h)}:00`; }
+    m = q.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+    return m ? `${pad(+m[1])}:00` : null;
+  }
+
+  function ask(raw){
+    raw = (raw||'').trim(); if(!raw || !CURRENT) return;
+    const q = raw.toLowerCase(), b = CURRENT, date = $('bdate').value || todayStr();
+    const t = askedTime(q), loyal = aiLoyalty(b);
+    let reply;
+    if(/discount|loyal|offer|visit/.test(q)){
+      reply = loyal.pct ? `Yes! You get ${loyal.pct}% off. Pay Ksh ${loyal.pay}.` : `Not yet. ${loyal.next}`;
+    } else if(t){
+      reply = aiPredict(b, date, t).summary;
+    } else if(/when|quiet|best|low|empty|free/.test(q) && !/busy|high|peak|crowd|queue/.test(q)){
+      const p = aiPredict(b, date, '');
+      reply = p.quiet.length ? `Quiet times: ${p.quiet.join(', ')}.` : (p.closed ? p.summary : 'It is busy all day. Try another day.');
+    } else if(/busy|high|peak|crowd|queue/.test(q)){
+      const p = aiPredict(b, date, '');
+      reply = p.busiest.length ? `Busiest times: ${p.busiest.join(', ')}.` : (p.closed ? p.summary : 'No very busy times that day.');
+    } else {
+      reply = selectedTime ? aiPredict(b, date, selectedTime).summary : 'Ask me about a time, like "Is 2pm okay?"';
+    }
+    const box = $('chatBox');
+    box.innerHTML += `<div class="bubble me">${esc(raw)}</div><div class="bubble bot">${esc(reply)}</div>`;
+    $('aiInput').value=''; box.scrollTop=box.scrollHeight;
+  }
+
+  // ===== Events =====
+  input.addEventListener('input', render);
+  input.addEventListener('focus', render);
+  input.addEventListener('blur', ()=>setTimeout(()=>list.style.display='none',100));
+  input.addEventListener('keydown', e=>{
+    const mark = () => [...list.children].forEach((li,i)=>li.classList.toggle('active', i===active));
+    if(e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1, shown.length-1); mark(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); active=Math.max(active-1,0); mark(); }
+    else if(e.key==='Enter'){ e.preventDefault(); active>=0 ? selectBusiness(shown[active]) : doSearch(); }
+  });
+  $('go').addEventListener('click', doSearch);
+  $('bdate').value = todayStr(); $('bdate').min = todayStr();
+  $('bdate').addEventListener('change', ()=>{ $('confirm').style.display='none'; refresh(false); });
+  $('chips').addEventListener('click', e=>{
+    const c = e.target.closest && e.target.closest('[data-time]'); if(!c) return;
+    selectedTime = c.dataset.time; $('msg').style.display='none'; $('confirm').style.display='none'; refresh(false);
+  });
+  $('bookBtn').addEventListener('click', book);
+  $('aiAsk').addEventListener('click', ()=>ask($('aiInput').value));
+  $('aiInput').addEventListener('keydown', e=>{ if(e.key==='Enter') ask($('aiInput').value); });
+  $('quick').addEventListener('click', e=>{ const q = e.target.dataset && e.target.dataset.q; if(q) ask(q); });
+</script>
+</body>
+</html>
